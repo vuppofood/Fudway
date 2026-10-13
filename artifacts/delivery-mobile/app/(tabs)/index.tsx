@@ -97,8 +97,7 @@ function CategoryButton({
         style={[
           styles.categoryIcon,
           {
-            backgroundColor:
-              category.isMore || selected ? colors.brandYellow : colors.brandGreen,
+            backgroundColor: selected ? colors.brandYellow : colors.brandGreen,
           },
         ]}
       >
@@ -232,7 +231,7 @@ function CategoryArtwork({
       <Svg width={52} height={52} viewBox="0 0 64 64">
         {[14, 31, 48].flatMap((x) =>
           [14, 31, 48].map((y) => (
-            <Circle key={`${x}-${y}`} cx={x} cy={y} r={7.5} fill={ink} />
+            <Circle key={`${x}-${y}`} cx={x} cy={y} r={7.5} fill={yellow} />
           )),
         )}
       </Svg>
