@@ -264,16 +264,22 @@ function CategoryArtwork({
 
 function RestaurantCard({ restaurant }: { restaurant: Restaurant }) {
   const colors = useColors();
+  const router = useRouter();
 
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={`Abrir ${restaurant.name}`}
       onPress={() =>
-        Alert.alert(
-          restaurant.name,
-          `${restaurant.cuisine} · ${restaurant.delivery} · Nota ${restaurant.rating}`,
-        )
+        router.push({
+          pathname: '/store',
+          params: {
+            name: restaurant.name,
+            cuisine: restaurant.cuisine,
+            rating: restaurant.rating,
+            delivery: restaurant.delivery,
+          },
+        })
       }
       style={({ pressed }) => [
         styles.restaurantCard,
@@ -488,7 +494,7 @@ export default function HomeScreen() {
               <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
                 {activeCategory
                   ? `${activeCategory} em destaque`
-                  : 'Restaurantes em destaque'}
+                  : 'Lojas'}
               </Text>
               <Pressable
                 accessibilityRole="button"
