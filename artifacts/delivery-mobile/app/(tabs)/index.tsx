@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
@@ -319,6 +320,7 @@ function RestaurantCard({ restaurant }: { restaurant: Restaurant }) {
 export default function HomeScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
@@ -373,9 +375,7 @@ export default function HomeScreen() {
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Abrir carrinho, 1 item"
-              onPress={() =>
-                Alert.alert('Seu carrinho', 'Você ainda não adicionou itens.')
-              }
+              onPress={() => router.push('/cart')}
               style={styles.cartButton}
             >
               <Feather name="shopping-cart" size={25} color="#ffffff" />
