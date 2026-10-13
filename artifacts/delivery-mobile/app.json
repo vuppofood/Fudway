@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "Delivery Mobile",
+    "slug": "delivery-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "delivery-mobile",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#063a23"
+    },
+    "ios": {
+      "supportsTablet": false
+    },
+    "android": {},
+    "web": {
+      "favicon": "./assets/images/icon.png"
+    },
+    "plugins": ["expo-router"],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}
