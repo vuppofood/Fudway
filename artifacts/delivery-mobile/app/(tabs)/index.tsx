@@ -96,7 +96,10 @@ function CategoryButton({
       <View
         style={[
           styles.categoryIcon,
-          { backgroundColor: selected ? colors.brandYellow : colors.brandGreen },
+          {
+            backgroundColor:
+              category.isMore || selected ? colors.brandYellow : colors.brandGreen,
+          },
         ]}
       >
         <CategoryArtwork category={category} palette={colors} />
