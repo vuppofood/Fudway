@@ -230,13 +230,6 @@ function CategoryArtwork({
         <Circle cx={17} cy={27} r={4} fill={yellow} />
         <Circle cx={32} cy={27} r={4} fill={yellow} />
         <Circle cx={47} cy={27} r={4} fill={yellow} />
-        <Path
-          d="M32 39v15M24.5 46.5h15"
-          fill="none"
-          stroke={light}
-          strokeWidth={3}
-          strokeLinecap="round"
-        />
       </Svg>
     );
   }
