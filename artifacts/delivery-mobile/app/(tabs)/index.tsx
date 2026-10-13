@@ -13,12 +13,12 @@ import {
 } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 
 type Category = {
   name: string;
-  icon: React.ComponentProps<typeof MaterialCommunityIcons>['name'];
 };
 
 type Restaurant = {
@@ -33,10 +33,10 @@ type Restaurant = {
 };
 
 const categories: Category[] = [
-  { name: 'Sanduíches', icon: 'hamburger' },
-  { name: 'Bebidas', icon: 'cup' },
-  { name: 'Sobremesas', icon: 'cupcake' },
-  { name: 'Combos', icon: 'food-takeout-box' },
+  { name: 'Sanduíches' },
+  { name: 'Bebidas' },
+  { name: 'Sobremesas' },
+  { name: 'Combos' },
 ];
 
 const restaurants: Restaurant[] = [
@@ -98,16 +98,151 @@ function CategoryButton({
           { backgroundColor: selected ? colors.brandYellow : colors.brandGreen },
         ]}
       >
-        <MaterialCommunityIcons
-          name={category.icon}
-          size={39}
-          color={selected ? colors.brandGreen : colors.brandYellow}
-        />
+        <CategoryArtwork category={category} palette={colors} />
       </View>
       <Text style={[styles.categoryLabel, { color: colors.foreground }]}>
         {category.name}
       </Text>
     </Pressable>
+  );
+}
+
+function CategoryArtwork({
+  category,
+  palette,
+}: {
+  category: Category;
+  palette: ReturnType<typeof useColors>;
+}) {
+  const ink = palette.brandDeepGreen;
+  const yellow = palette.brandYellow;
+  const light = palette.brandPaper;
+
+  if (category.name === 'Sanduíches') {
+    return (
+      <Svg width={52} height={52} viewBox="0 0 64 64">
+        <Path
+          d="M8 25C9 15 18 10 32 10s23 5 24 15H8Z"
+          fill={yellow}
+          stroke={ink}
+          strokeWidth={2}
+          strokeLinejoin="round"
+        />
+        <Path
+          d="M9 29c5-4 9 4 14 0s9 4 14 0 9 4 17 0l-2 6H11l-2-6Z"
+          fill={palette.brandLettuce}
+          stroke={ink}
+          strokeWidth={1.5}
+          strokeLinejoin="round"
+        />
+        <Path
+          d="M10 36h44v5H10z"
+          fill={palette.brandTomato}
+          stroke={ink}
+          strokeWidth={1.5}
+        />
+        <Path
+          d="M11 42h42v5H11z"
+          fill={palette.brandPatty}
+          stroke={ink}
+          strokeWidth={1.5}
+        />
+        <Path
+          d="M12 48h40c-1 5-5 7-11 7H23c-6 0-10-2-11-7Z"
+          fill={yellow}
+          stroke={ink}
+          strokeWidth={2}
+          strokeLinejoin="round"
+        />
+      </Svg>
+    );
+  }
+
+  if (category.name === 'Bebidas') {
+    return (
+      <Svg width={52} height={52} viewBox="0 0 64 64">
+        <Path
+          d="m27 8 7 11"
+          fill="none"
+          stroke={light}
+          strokeWidth={3}
+          strokeLinecap="round"
+        />
+        <Path
+          d="M22 14h25l-3 6H19l3-6Z"
+          fill={palette.brandLettuce}
+          stroke={ink}
+          strokeWidth={2}
+          strokeLinejoin="round"
+        />
+        <Path
+          d="M17 22h33l-4 31c-.4 3-2.5 5-5.5 5h-14c-3 0-5-2-5.5-5l-4-31Z"
+          fill={yellow}
+          stroke={ink}
+          strokeWidth={2}
+          strokeLinejoin="round"
+        />
+        <Path
+          d="M30 31c0-3 7-3 7 0s-7 3-7 6 7 3 7 0"
+          fill="none"
+          stroke={ink}
+          strokeWidth={3}
+          strokeLinecap="round"
+        />
+      </Svg>
+    );
+  }
+
+  if (category.name === 'Sobremesas') {
+    return (
+      <Svg width={52} height={52} viewBox="0 0 64 64">
+        <Path
+          d="M32 12c-1-4 2-6 5-8"
+          fill="none"
+          stroke={palette.brandLettuce}
+          strokeWidth={2}
+          strokeLinecap="round"
+        />
+        <Circle cx={31} cy={13} r={6} fill={palette.brandTomato} stroke={ink} strokeWidth={2} />
+        <Path
+          d="M13 34c-4-1-5-5-2-8 2-2 5-2 7-1 0-6 5-10 12-8 4-7 16-5 17 3 6-1 10 3 8 8 3 2 2 6-2 7H15l-2-1Z"
+          fill={light}
+          stroke={ink}
+          strokeWidth={2}
+          strokeLinejoin="round"
+        />
+        <Path
+          d="M18 37h28l-4 17c-.4 2-2 3-4 3H26c-2 0-3.6-1-4-3l-4-17Z"
+          fill={light}
+          stroke={ink}
+          strokeWidth={2}
+          strokeLinejoin="round"
+        />
+        <Path d="m25 39 2 15M32 39v15M39 39l-2 15" stroke={palette.brandTomato} strokeWidth={2} />
+      </Svg>
+    );
+  }
+
+  return (
+    <Svg width={52} height={52} viewBox="0 0 64 64">
+      <Path
+        d="M12 24h40l-3 29c-.3 3-2 5-5 5H20c-3 0-4.7-2-5-5l-3-29Z"
+        fill={yellow}
+        stroke={ink}
+        strokeWidth={2}
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M20 24c0-6 5-10 12-10s12 4 12 10"
+        fill="none"
+        stroke={light}
+        strokeWidth={3}
+        strokeLinecap="round"
+      />
+      <Path d="M10 24h44l-5-7H15l-5 7Z" fill={palette.brandLettuce} stroke={ink} strokeWidth={2} />
+      <Rect x={25} y={34} width={14} height={13} rx={2} fill={palette.brandGreen} />
+      <Path d="M28 40h8" stroke={yellow} strokeWidth={2} strokeLinecap="round" />
+    </Svg>
   );
 }
 
@@ -499,7 +634,7 @@ const styles = StyleSheet.create({
   categoryIcon: {
     width: 72,
     height: 72,
-    borderRadius: 28,
+    borderRadius: 36,
     alignItems: 'center',
     justifyContent: 'center',
   },

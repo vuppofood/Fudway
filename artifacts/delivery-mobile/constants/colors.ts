@@ -57,6 +57,10 @@ const colors = {
     brandCream: '#f5faf7',
     brandMint: '#e9f3ed',
     brandMutedGreen: '#74877c',
+    brandLettuce: '#61aa4b',
+    brandTomato: '#ee4438',
+    brandPatty: '#8a5228',
+    brandPaper: '#fbfff9',
   },
 
   // Border radius (in px). Sync from the sibling web artifact's --radius
