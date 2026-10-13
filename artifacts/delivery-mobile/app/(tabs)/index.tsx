@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Image,
@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
@@ -327,14 +327,21 @@ export default function HomeScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const params = useLocalSearchParams<{ category?: string }>();
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (params.category) setActiveCategory(params.category);
+  }, [params.category]);
 
   const visibleRestaurants = useMemo(() => {
     const query = search.trim().toLocaleLowerCase('pt-BR');
     return restaurants.filter((restaurant) => {
       const matchesCategory =
-        !activeCategory || restaurant.category === activeCategory;
+        !activeCategory ||
+        restaurant.category === activeCategory ||
+        restaurant.cuisine === activeCategory;
       const matchesSearch =
         !query ||
         `${restaurant.name} ${restaurant.cuisine}`
@@ -468,17 +475,7 @@ export default function HomeScreen() {
                 selected={activeCategory === category.name}
                 onPress={() => {
                   if (category.isMore) {
-                    Alert.alert(
-                      'Mais categorias',
-                      'Escolha outra categoria para explorar.',
-                      [
-                        {
-                          text: 'Combos',
-                          onPress: () => setActiveCategory('Combos'),
-                        },
-                        { text: 'Fechar', style: 'cancel' },
-                      ],
-                    );
+                    router.push('/categories');
                     return;
                   }
                   setActiveCategory((current) =>
