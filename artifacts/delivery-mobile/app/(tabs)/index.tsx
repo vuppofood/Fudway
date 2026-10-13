@@ -227,9 +227,11 @@ function CategoryArtwork({
   if (category.isMore) {
     return (
       <Svg width={52} height={52} viewBox="0 0 64 64">
-        <Circle cx={17} cy={27} r={4} fill={yellow} />
-        <Circle cx={32} cy={27} r={4} fill={yellow} />
-        <Circle cx={47} cy={27} r={4} fill={yellow} />
+        {[14, 31, 48].flatMap((x) =>
+          [14, 31, 48].map((y) => (
+            <Circle key={`${x}-${y}`} cx={x} cy={y} r={7.5} fill={ink} />
+          )),
+        )}
       </Svg>
     );
   }
