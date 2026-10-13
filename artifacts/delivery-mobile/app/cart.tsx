@@ -216,80 +216,82 @@ export default function CartScreen() {
                 ))}
               </View>
 
-              <View style={styles.couponSection}>
-                <View style={styles.couponLabelRow}>
-                  <Feather name="tag" size={14} color={colors.brandYellow} />
-                  <Text style={[styles.couponTitle, { color: colors.foreground }]}>
-                    Cupom de desconto
-                  </Text>
-                  {couponApplied ? (
-                    <Text style={[styles.couponApplied, { color: colors.brandGreen }]}>
-                      LANCHE10 aplicado
+              <View style={styles.checkoutArea}>
+                <View style={styles.couponSection}>
+                  <View style={styles.couponLabelRow}>
+                    <Feather name="tag" size={14} color={colors.brandYellow} />
+                    <Text style={[styles.couponTitle, { color: colors.foreground }]}>
+                      Cupom de desconto
                     </Text>
-                  ) : null}
+                    {couponApplied ? (
+                      <Text style={[styles.couponApplied, { color: colors.brandGreen }]}>
+                        LANCHE10 aplicado
+                      </Text>
+                    ) : null}
+                  </View>
+                  <View style={styles.couponControls}>
+                    <TextInput
+                      accessibilityLabel="Código de desconto"
+                      autoCapitalize="characters"
+                      onChangeText={setCouponText}
+                      placeholder="Digite o código"
+                      placeholderTextColor={colors.mutedForeground}
+                      value={couponText}
+                      style={[
+                        styles.couponInput,
+                        { borderColor: colors.border, color: colors.foreground },
+                      ]}
+                    />
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={applyCoupon}
+                      style={({ pressed }) => [
+                        styles.applyButton,
+                        { backgroundColor: colors.brandMint, opacity: pressed ? 0.75 : 1 },
+                      ]}
+                    >
+                      <Text style={[styles.applyText, { color: colors.brandGreen }]}>
+                        Aplicar
+                      </Text>
+                    </Pressable>
+                  </View>
                 </View>
-                <View style={styles.couponControls}>
-                  <TextInput
-                    accessibilityLabel="Código de desconto"
-                    autoCapitalize="characters"
-                    onChangeText={setCouponText}
-                    placeholder="Digite o código"
-                    placeholderTextColor={colors.mutedForeground}
-                    value={couponText}
-                    style={[
-                      styles.couponInput,
-                      { borderColor: colors.border, color: colors.foreground },
-                    ]}
-                  />
-                  <Pressable
-                    accessibilityRole="button"
-                    onPress={applyCoupon}
-                    style={({ pressed }) => [
-                      styles.applyButton,
-                      { backgroundColor: colors.brandMint, opacity: pressed ? 0.75 : 1 },
-                    ]}
-                  >
-                    <Text style={[styles.applyText, { color: colors.brandGreen }]}>
-                      Aplicar
-                    </Text>
-                  </Pressable>
-                </View>
-              </View>
 
-              <View style={[styles.summary, { borderTopColor: colors.border }]}>
-                <SummaryRow label="Subtotal" value={formatPrice(subtotal)} colors={colors} />
-                <SummaryRow
-                  label="Taxa de entrega"
-                  value={formatPrice(deliveryFee)}
-                  colors={colors}
-                />
-                {couponApplied ? (
+                <View style={[styles.summary, { borderTopColor: colors.border }]}>
+                  <SummaryRow label="Subtotal" value={formatPrice(subtotal)} colors={colors} />
                   <SummaryRow
-                    label="Desconto"
-                    value={`− ${formatPrice(discount)}`}
+                    label="Taxa de entrega"
+                    value={formatPrice(deliveryFee)}
                     colors={colors}
                   />
-                ) : null}
-                <SummaryRow
-                  label="Total"
-                  value={formatPrice(total)}
-                  colors={colors}
-                  emphasized
-                />
-              </View>
+                  {couponApplied ? (
+                    <SummaryRow
+                      label="Desconto"
+                      value={`− ${formatPrice(discount)}`}
+                      colors={colors}
+                    />
+                  ) : null}
+                  <SummaryRow
+                    label="Total"
+                    value={formatPrice(total)}
+                    colors={colors}
+                    emphasized
+                  />
+                </View>
 
-              <Pressable
-                accessibilityRole="button"
-                onPress={finishOrder}
-                style={({ pressed }) => [
-                  styles.checkoutButton,
-                  { backgroundColor: colors.brandYellow, opacity: pressed ? 0.84 : 1 },
-                ]}
-              >
-                <Text style={[styles.checkoutText, { color: colors.brandDeepGreen }]}>
-                  Finalizar pedido
-                </Text>
-              </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={finishOrder}
+                  style={({ pressed }) => [
+                    styles.checkoutButton,
+                    { backgroundColor: colors.brandYellow, opacity: pressed ? 0.84 : 1 },
+                  ]}
+                >
+                  <Text style={[styles.checkoutText, { color: colors.brandDeepGreen }]}>
+                    Finalizar pedido
+                  </Text>
+                </Pressable>
+              </View>
             </>
           ) : (
             <View style={styles.emptyState}>
@@ -353,9 +355,9 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   page: { flexGrow: 1, paddingBottom: 8 },
   header: {
-    minHeight: 54,
+    minHeight: 58,
     paddingHorizontal: 17,
-    paddingBottom: 13,
+    paddingBottom: 16,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
@@ -383,17 +385,18 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 19,
     borderBottomRightRadius: 19,
   },
-  itemList: {},
+  itemList: { gap: 14 },
+  checkoutArea: { marginTop: 'auto' },
   cartItem: {
-    minHeight: 82,
+    minHeight: 126,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    paddingVertical: 7,
+    paddingVertical: 10,
   },
   productImage: {
-    width: 62,
-    height: 62,
+    width: 74,
+    height: 74,
     borderRadius: 9,
     backgroundColor: '#eaf2ed',
   },
