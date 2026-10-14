@@ -234,7 +234,7 @@ export default function CategoryScreen() {
       >
         <View style={styles.resultsHeading}>
           <Text style={[styles.resultsTitle, { color: colors.foreground }]}>
-            Lojas
+            {categoryName}
           </Text>
         </View>
 
