@@ -16,20 +16,10 @@ import { useRouter } from 'expo-router';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { restaurants, type Restaurant } from '@/constants/restaurants';
 
 type Category = {
   name: string;
-};
-
-type Restaurant = {
-  name: string;
-  cuisine: string;
-  rating: string;
-  delivery: string;
-  category: string;
-  image?: number;
-  logo?: string;
-  verified?: boolean;
 };
 
 const categories: Category[] = [
@@ -40,49 +30,11 @@ const categories: Category[] = [
   { name: 'Bebidas' },
 ];
 
-const restaurants: Restaurant[] = [
-  {
-    name: 'Subway',
-    cuisine: 'Sanduíches',
-    rating: '4.8',
-    delivery: '25–40 min',
-    category: 'Sanduíches',
-    logo: 'SUBWAY',
-    verified: true,
-  },
-  {
-    name: 'Subway King',
-    cuisine: 'Hambúrgueres',
-    rating: '4.6',
-    delivery: '30–50 min',
-    category: 'Sanduíches',
-    image: require('../../assets/images/restaurant-burger.jpg'),
-  },
-  {
-    name: 'Bebidas & Cia',
-    cuisine: 'Bebidas e bowls',
-    rating: '4.7',
-    delivery: '20–35 min',
-    category: 'Bebidas',
-    image: require('../../assets/images/restaurant-bowl.jpg'),
-  },
-  {
-    name: 'Combo da Casa',
-    cuisine: 'Combos especiais',
-    rating: '4.9',
-    delivery: '25–40 min',
-    category: 'Combos',
-    image: require('../../assets/images/restaurant-burger.jpg'),
-  },
-];
-
 function CategoryButton({
   category,
-  selected,
   onPress,
 }: {
   category: Category;
-  selected: boolean;
   onPress: () => void;
 }) {
   const colors = useColors();
@@ -96,9 +48,7 @@ function CategoryButton({
       <View
         style={[
           styles.categoryIcon,
-          {
-            backgroundColor: selected ? colors.brandYellow : colors.brandGreen,
-          },
+          { backgroundColor: colors.brandGreen },
         ]}
       >
         <CategoryArtwork category={category} palette={colors} />
@@ -335,26 +285,17 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [search, setSearch] = useState('');
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
   const visibleRestaurants = useMemo(() => {
     const query = search.trim().toLocaleLowerCase('pt-BR');
-    return restaurants.filter((restaurant) => {
-      const filterCategory =
-        activeCategory === 'Lanches' ? 'Sanduíches' : activeCategory;
-      const matchesCategory =
-        !activeCategory ||
-        activeCategory === 'Restaurantes' ||
-        restaurant.category === filterCategory ||
-        restaurant.cuisine === filterCategory;
-      const matchesSearch =
+    return restaurants.filter(
+      (restaurant) =>
         !query ||
         `${restaurant.name} ${restaurant.cuisine}`
           .toLocaleLowerCase('pt-BR')
-          .includes(query);
-      return matchesCategory && matchesSearch;
-    });
-  }, [activeCategory, search]);
+          .includes(query),
+    );
+  }, [search]);
 
   const topInset = Platform.OS === 'web' ? 67 : Platform.OS === 'android' ? 0 : insets.top;
 
@@ -479,12 +420,12 @@ export default function HomeScreen() {
               <CategoryButton
                 key={category.name}
                 category={category}
-                selected={activeCategory === category.name}
-                onPress={() => {
-                  setActiveCategory((current) =>
-                    current === category.name ? null : category.name,
-                  );
-                }}
+                onPress={() =>
+                  router.push({
+                    pathname: '/category',
+                    params: { category: category.name },
+                  })
+                }
               />
             ))}
           </View>
@@ -492,13 +433,16 @@ export default function HomeScreen() {
           <View style={styles.featuredSection}>
             <View style={styles.sectionHeading}>
               <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
-                {activeCategory
-                  ? `${activeCategory} em destaque`
-                  : 'Lojas'}
+                Lojas
               </Text>
               <Pressable
                 accessibilityRole="button"
-                onPress={() => setActiveCategory(null)}
+                onPress={() =>
+                  router.push({
+                    pathname: '/category',
+                    params: { category: 'Restaurantes' },
+                  })
+                }
                 style={styles.seeAllButton}
               >
                 <Text style={[styles.seeAllText, { color: colors.brandMutedGreen }]}>
