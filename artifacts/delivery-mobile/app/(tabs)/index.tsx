@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Alert,
   Image,
@@ -12,14 +12,13 @@ import {
 } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 
 type Category = {
   name: string;
-  isMore?: boolean;
 };
 
 type Restaurant = {
@@ -34,10 +33,11 @@ type Restaurant = {
 };
 
 const categories: Category[] = [
-  { name: 'Sanduíches' },
+  { name: 'Lanches' },
+  { name: 'Restaurantes' },
+  { name: 'Padaria' },
+  { name: 'Doces e bolos' },
   { name: 'Bebidas' },
-  { name: 'Sobremesas' },
-  { name: 'Ver mais', isMore: true },
 ];
 
 const restaurants: Restaurant[] = [
@@ -121,7 +121,7 @@ function CategoryArtwork({
   const yellow = palette.brandYellow;
   const light = palette.brandPaper;
 
-  if (category.name === 'Sanduíches') {
+  if (category.name === 'Lanches') {
     return (
       <Svg width={52} height={52} viewBox="0 0 64 64">
         <Path
@@ -196,7 +196,7 @@ function CategoryArtwork({
     );
   }
 
-  if (category.name === 'Sobremesas') {
+  if (category.name === 'Doces e bolos') {
     return (
       <Svg width={52} height={52} viewBox="0 0 64 64">
         <Path
@@ -226,15 +226,23 @@ function CategoryArtwork({
     );
   }
 
-  if (category.isMore) {
+  if (category.name === 'Restaurantes') {
     return (
-      <Svg width={52} height={52} viewBox="0 0 64 64">
-        {[14, 31, 48].flatMap((x) =>
-          [14, 31, 48].map((y) => (
-            <Circle key={`${x}-${y}`} cx={x} cy={y} r={7.5} fill={yellow} />
-          )),
-        )}
-      </Svg>
+      <MaterialCommunityIcons
+        name="silverware-fork-knife"
+        size={35}
+        color={yellow}
+      />
+    );
+  }
+
+  if (category.name === 'Padaria') {
+    return (
+      <MaterialCommunityIcons
+        name="bread-slice"
+        size={37}
+        color={yellow}
+      />
     );
   }
 
@@ -326,21 +334,19 @@ export default function HomeScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const params = useLocalSearchParams<{ category?: string }>();
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (params.category) setActiveCategory(params.category);
-  }, [params.category]);
 
   const visibleRestaurants = useMemo(() => {
     const query = search.trim().toLocaleLowerCase('pt-BR');
     return restaurants.filter((restaurant) => {
+      const filterCategory =
+        activeCategory === 'Lanches' ? 'Sanduíches' : activeCategory;
       const matchesCategory =
         !activeCategory ||
-        restaurant.category === activeCategory ||
-        restaurant.cuisine === activeCategory;
+        activeCategory === 'Restaurantes' ||
+        restaurant.category === filterCategory ||
+        restaurant.cuisine === filterCategory;
       const matchesSearch =
         !query ||
         `${restaurant.name} ${restaurant.cuisine}`
@@ -475,10 +481,6 @@ export default function HomeScreen() {
                 category={category}
                 selected={activeCategory === category.name}
                 onPress={() => {
-                  if (category.isMore) {
-                    router.push('/categories');
-                    return;
-                  }
                   setActiveCategory((current) =>
                     current === category.name ? null : category.name,
                   );
