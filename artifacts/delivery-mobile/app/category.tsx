@@ -233,20 +233,9 @@ export default function CategoryScreen() {
         ]}
       >
         <View style={styles.resultsHeading}>
-          <View>
-            <Text style={[styles.resultsTitle, { color: colors.foreground }]}>
-              {search ? 'Resultados da busca' : `Lojas de ${categoryName}`}
-            </Text>
-            <Text style={[styles.resultsSubtitle, { color: colors.mutedForeground }]}>
-              {categoryRestaurants.length}{' '}
-              {categoryRestaurants.length === 1 ? 'loja encontrada' : 'lojas encontradas'}
-            </Text>
-          </View>
-          <View style={[styles.countBadge, { backgroundColor: colors.brandMint }]}>
-            <Text style={[styles.countBadgeText, { color: colors.brandGreen }]}>
-              {categoryRestaurants.length}
-            </Text>
-          </View>
+          <Text style={[styles.resultsTitle, { color: colors.foreground }]}>
+            Lojas
+          </Text>
         </View>
 
         {categoryRestaurants.length > 0 ? (
@@ -346,16 +335,6 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   resultsTitle: { fontSize: 18, fontWeight: '800', letterSpacing: -0.2 },
-  resultsSubtitle: { marginTop: 4, fontSize: 11 },
-  countBadge: {
-    minWidth: 32,
-    height: 32,
-    paddingHorizontal: 9,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  countBadgeText: { fontSize: 12, fontWeight: '800' },
   storeList: { gap: 11 },
   storeCard: {
     minHeight: 104,
