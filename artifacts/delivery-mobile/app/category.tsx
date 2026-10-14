@@ -187,7 +187,7 @@ export default function CategoryScreen() {
           },
         ]}
       >
-        <View style={styles.headerTop}>
+        <View style={styles.headerTools}>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Voltar"
@@ -198,45 +198,29 @@ export default function CategoryScreen() {
           >
             <Feather name="arrow-left" size={21} color="#ffffff" />
           </Pressable>
-          <View style={styles.headerText}>
-            <Text style={styles.eyebrow}>CATEGORIA</Text>
-            <Text numberOfLines={1} style={styles.title}>
-              {categoryName}
-            </Text>
-          </View>
-          <View style={[styles.categoryIcon, { backgroundColor: colors.brandGreen }]}>
-            <MaterialCommunityIcons
-              name={categoryIcons[categoryName]}
-              size={24}
-              color={colors.brandYellow}
+          <View style={[styles.searchBar, { backgroundColor: '#285a43' }]}>
+            <Feather name="search" size={19} color="#ffffff" />
+            <TextInput
+              accessibilityLabel={`Buscar em ${categoryName}`}
+              testID="category-search"
+              value={search}
+              onChangeText={setSearch}
+              placeholder="Buscar loja ou tipo de comida"
+              placeholderTextColor="#c0d0c7"
+              returnKeyType="search"
+              style={styles.searchInput}
             />
+            {search ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Limpar busca"
+                onPress={() => setSearch('')}
+                hitSlop={8}
+              >
+                <Feather name="x-circle" size={17} color="#d7e2dc" />
+              </Pressable>
+            ) : null}
           </View>
-        </View>
-        <Text style={styles.headerSubtitle}>
-          Encontre sua próxima refeição favorita.
-        </Text>
-        <View style={[styles.searchBar, { backgroundColor: '#285a43' }]}>
-          <Feather name="search" size={19} color="#ffffff" />
-          <TextInput
-            accessibilityLabel={`Buscar em ${categoryName}`}
-            testID="category-search"
-            value={search}
-            onChangeText={setSearch}
-            placeholder="Buscar loja ou tipo de comida"
-            placeholderTextColor="#c0d0c7"
-            returnKeyType="search"
-            style={styles.searchInput}
-          />
-          {search ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Limpar busca"
-              onPress={() => setSearch('')}
-              hitSlop={8}
-            >
-              <Feather name="x-circle" size={17} color="#d7e2dc" />
-            </Pressable>
-          ) : null}
         </View>
       </View>
 
@@ -335,7 +319,7 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 22,
     borderBottomRightRadius: 22,
   },
-  headerTop: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  headerTools: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   backButton: {
     width: 40,
     height: 40,
@@ -344,18 +328,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.10)',
   },
-  headerText: { flex: 1, gap: 2 },
-  eyebrow: { color: '#c1d8ca', fontSize: 9, fontWeight: '700', letterSpacing: 1.2 },
-  title: { color: '#ffffff', fontSize: 22, fontWeight: '800' },
-  categoryIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 15,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerSubtitle: { color: '#d1e0d7', fontSize: 12, marginTop: 10, marginBottom: 14 },
   searchBar: {
+    flex: 1,
     minHeight: 46,
     borderRadius: 24,
     paddingHorizontal: 14,
