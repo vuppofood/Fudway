@@ -270,19 +270,6 @@ export default function CategoryScreen() {
                     },
                   ]}
                 >
-                  <View
-                    style={[
-                      styles.filterIndicator,
-                      {
-                        backgroundColor: colors.brandCream,
-                        borderColor: selected ? colors.brandGreen : colors.brandMutedGreen,
-                      },
-                    ]}
-                  >
-                    {selected ? (
-                      <Feather name="check" size={11} color={colors.brandGreen} />
-                    ) : null}
-                  </View>
                   <Text
                     style={[
                       styles.filterText,
@@ -401,17 +388,9 @@ const styles = StyleSheet.create({
     width: '48%',
     minHeight: 42,
     borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: 7,
     paddingHorizontal: 10,
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  filterIndicator: {
-    width: 16,
-    height: 16,
-    borderWidth: 1.5,
-    borderRadius: 4,
     alignItems: 'center',
     justifyContent: 'center',
   },
