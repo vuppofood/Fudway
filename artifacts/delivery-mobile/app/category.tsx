@@ -251,11 +251,7 @@ export default function CategoryScreen() {
         ]}
       >
         <View style={styles.filtersViewport}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.filterRow}
-          >
+          <View style={styles.filterGrid}>
             {filterOptions.map((filter) => {
               const selected = activeFilters.includes(filter.id);
               return (
@@ -269,15 +265,28 @@ export default function CategoryScreen() {
                   style={[
                     styles.filterChip,
                     {
-                      backgroundColor: selected ? colors.brandGreen : colors.card,
+                      backgroundColor: colors.brandCream,
                       borderColor: selected ? colors.brandGreen : colors.border,
                     },
                   ]}
                 >
+                  <View
+                    style={[
+                      styles.filterIndicator,
+                      {
+                        backgroundColor: colors.brandCream,
+                        borderColor: selected ? colors.brandGreen : colors.brandMutedGreen,
+                      },
+                    ]}
+                  >
+                    {selected ? (
+                      <Feather name="check" size={11} color={colors.brandGreen} />
+                    ) : null}
+                  </View>
                   <Text
                     style={[
                       styles.filterText,
-                      { color: selected ? '#ffffff' : colors.foreground },
+                      { color: selected ? colors.brandGreen : colors.foreground },
                     ]}
                   >
                     {filter.label}
@@ -285,7 +294,7 @@ export default function CategoryScreen() {
                 </Pressable>
               );
             })}
-          </ScrollView>
+          </View>
         </View>
 
         <View style={styles.resultsHeading}>
@@ -386,18 +395,27 @@ const styles = StyleSheet.create({
   },
   searchInput: { flex: 1, color: '#ffffff', fontSize: 13, paddingVertical: 9 },
   content: { flexGrow: 1, paddingHorizontal: 15, paddingTop: 21 },
-  filtersViewport: { marginHorizontal: -15, marginBottom: 17 },
-  filterRow: { paddingHorizontal: 15, gap: 6 },
+  filtersViewport: { marginBottom: 17 },
+  filterGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   filterChip: {
-    minHeight: 36,
+    width: '48%',
+    minHeight: 42,
     borderWidth: 1,
-    borderRadius: 18,
-    paddingHorizontal: 8,
+    borderRadius: 10,
+    paddingHorizontal: 10,
     flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  filterIndicator: {
+    width: 16,
+    height: 16,
+    borderWidth: 1.5,
+    borderRadius: 4,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  filterText: { fontSize: 10, fontWeight: '700' },
+  filterText: { flexShrink: 1, fontSize: 11, fontWeight: '700' },
   resultsHeading: {
     flexDirection: 'row',
     alignItems: 'center',
