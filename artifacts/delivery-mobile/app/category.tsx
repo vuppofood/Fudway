@@ -19,6 +19,7 @@ import { useColors } from '@/hooks/useColors';
 
 type CategoryName = 'Lanches' | 'Restaurantes' | 'Padaria' | 'Doces e bolos' | 'Bebidas';
 type CategoryIcon = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
+type FilterKey = 'openNow' | 'nearby' | 'promotion' | 'freeDelivery';
 
 const categoryNames: CategoryName[] = [
   'Lanches',
@@ -35,6 +36,13 @@ const categoryIcons: Record<CategoryName, CategoryIcon> = {
   'Doces e bolos': 'cupcake',
   Bebidas: 'cup',
 };
+
+const filterOptions: { id: FilterKey; label: string }[] = [
+  { id: 'openNow', label: 'Abertos agora' },
+  { id: 'nearby', label: 'Perto de mim' },
+  { id: 'promotion', label: 'Promoção' },
+  { id: 'freeDelivery', label: 'Entrega grátis' },
+];
 
 function StoreListCard({ restaurant }: { restaurant: Restaurant }) {
   const colors = useColors();
@@ -134,6 +142,15 @@ export default function CategoryScreen() {
   const categoryName: CategoryName =
     categoryNames.find((name) => name === params.category) ?? 'Restaurantes';
   const [search, setSearch] = useState('');
+  const [activeFilters, setActiveFilters] = useState<FilterKey[]>([]);
+
+  const toggleFilter = (filter: FilterKey) => {
+    setActiveFilters((current) =>
+      current.includes(filter)
+        ? current.filter((selected) => selected !== filter)
+        : [...current, filter],
+    );
+  };
 
   const categoryRestaurants = useMemo(() => {
     const matchingRestaurants = restaurants.filter((restaurant) => {
@@ -157,12 +174,13 @@ export default function CategoryScreen() {
     const query = search.trim().toLocaleLowerCase('pt-BR');
     return matchingRestaurants.filter(
       (restaurant) =>
-        !query ||
-        `${restaurant.name} ${restaurant.cuisine}`
-          .toLocaleLowerCase('pt-BR')
-          .includes(query),
+        activeFilters.every((filter) => restaurant[filter]) &&
+        (!query ||
+          `${restaurant.name} ${restaurant.cuisine}`
+            .toLocaleLowerCase('pt-BR')
+            .includes(query)),
     );
-  }, [categoryName, search]);
+  }, [activeFilters, categoryName, search]);
 
   const hasCategoryStores = restaurants.some((restaurant) => {
     if (categoryName === 'Restaurantes') return true;
@@ -232,6 +250,44 @@ export default function CategoryScreen() {
           { paddingBottom: Platform.OS === 'web' ? 34 : insets.bottom + 24 },
         ]}
       >
+        <View style={styles.filtersViewport}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filterRow}
+          >
+            {filterOptions.map((filter) => {
+              const selected = activeFilters.includes(filter.id);
+              return (
+                <Pressable
+                  key={filter.id}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected }}
+                  accessibilityLabel={`Filtrar: ${filter.label}`}
+                  testID={`filter-${filter.id}`}
+                  onPress={() => toggleFilter(filter.id)}
+                  style={[
+                    styles.filterChip,
+                    {
+                      backgroundColor: selected ? colors.brandGreen : colors.card,
+                      borderColor: selected ? colors.brandGreen : colors.border,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.filterText,
+                      { color: selected ? '#ffffff' : colors.foreground },
+                    ]}
+                  >
+                    {filter.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </View>
+
         <View style={styles.resultsHeading}>
           <Text style={[styles.resultsTitle, { color: colors.foreground }]}>
             {categoryName}
@@ -253,7 +309,9 @@ export default function CategoryScreen() {
               Nenhuma loja encontrada
             </Text>
             <Text style={[styles.emptyDescription, { color: colors.mutedForeground }]}>
-              Tente outro nome ou ajuste sua busca.
+              {activeFilters.length > 0
+                ? 'Tente remover um ou mais filtros.'
+                : 'Tente outro nome ou ajuste sua busca.'}
             </Text>
           </View>
         ) : (
@@ -328,6 +386,18 @@ const styles = StyleSheet.create({
   },
   searchInput: { flex: 1, color: '#ffffff', fontSize: 13, paddingVertical: 9 },
   content: { flexGrow: 1, paddingHorizontal: 15, paddingTop: 21 },
+  filtersViewport: { marginHorizontal: -15, marginBottom: 17 },
+  filterRow: { paddingHorizontal: 15, gap: 6 },
+  filterChip: {
+    minHeight: 36,
+    borderWidth: 1,
+    borderRadius: 18,
+    paddingHorizontal: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterText: { fontSize: 10, fontWeight: '700' },
   resultsHeading: {
     flexDirection: 'row',
     alignItems: 'center',

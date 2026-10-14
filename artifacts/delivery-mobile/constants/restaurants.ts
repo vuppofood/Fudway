@@ -7,6 +7,10 @@ export type Restaurant = {
   image?: number;
   logo?: string;
   verified?: boolean;
+  openNow: boolean;
+  nearby: boolean;
+  promotion: boolean;
+  freeDelivery: boolean;
 };
 
 export const restaurants: Restaurant[] = [
@@ -18,6 +22,10 @@ export const restaurants: Restaurant[] = [
     category: 'Sanduíches',
     logo: 'SUBWAY',
     verified: true,
+    openNow: true,
+    nearby: true,
+    promotion: true,
+    freeDelivery: false,
   },
   {
     name: 'Subway King',
@@ -26,6 +34,10 @@ export const restaurants: Restaurant[] = [
     delivery: '30–50 min',
     category: 'Sanduíches',
     image: require('../assets/images/restaurant-burger.jpg'),
+    openNow: true,
+    nearby: false,
+    promotion: false,
+    freeDelivery: true,
   },
   {
     name: 'Bebidas & Cia',
@@ -34,6 +46,10 @@ export const restaurants: Restaurant[] = [
     delivery: '20–35 min',
     category: 'Bebidas',
     image: require('../assets/images/restaurant-bowl.jpg'),
+    openNow: true,
+    nearby: true,
+    promotion: false,
+    freeDelivery: true,
   },
   {
     name: 'Combo da Casa',
@@ -42,5 +58,9 @@ export const restaurants: Restaurant[] = [
     delivery: '25–40 min',
     category: 'Combos',
     image: require('../assets/images/restaurant-burger.jpg'),
+    openNow: false,
+    nearby: true,
+    promotion: true,
+    freeDelivery: true,
   },
 ];
