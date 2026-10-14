@@ -266,7 +266,7 @@ export default function CategoryScreen() {
                     styles.filterChip,
                     {
                       backgroundColor: colors.brandCream,
-                      borderColor: selected ? colors.brandGreen : colors.border,
+                      borderColor: selected ? colors.brandGreen : colors.brandMutedGreen,
                     },
                   ]}
                 >
@@ -383,18 +383,23 @@ const styles = StyleSheet.create({
   searchInput: { flex: 1, color: '#ffffff', fontSize: 13, paddingVertical: 9 },
   content: { flexGrow: 1, paddingHorizontal: 15, paddingTop: 21 },
   filtersViewport: { marginBottom: 17 },
-  filterGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  filterGrid: { flexDirection: 'row', gap: 5 },
   filterChip: {
-    width: '48%',
-    minHeight: 42,
-    borderWidth: 1,
-    borderRadius: 7,
-    paddingHorizontal: 10,
+    flex: 1,
+    minHeight: 38,
+    borderWidth: 1.5,
+    borderRadius: 19,
+    paddingHorizontal: 3,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  filterText: { flexShrink: 1, fontSize: 11, fontWeight: '700' },
+  filterText: {
+    flexShrink: 1,
+    fontSize: 9,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
   resultsHeading: {
     flexDirection: 'row',
     alignItems: 'center',
