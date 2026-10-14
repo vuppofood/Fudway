@@ -505,7 +505,7 @@ export default function StoreScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   scrollContent: { paddingBottom: 18 },
-  hero: { height: 226, overflow: 'hidden' },
+  hero: { height: 190, overflow: 'hidden' },
   heroImage: {
     position: 'absolute',
     width: '100%',
