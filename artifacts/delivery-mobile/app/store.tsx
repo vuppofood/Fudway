@@ -9,7 +9,6 @@ import {
   Pressable,
   ScrollView,
   Share,
-  StatusBar,
   StyleSheet,
   Text,
   View,
@@ -230,7 +229,7 @@ export default function StoreScreen() {
     rating?: string;
     delivery?: string;
   }>();
-  const topInset = Platform.OS === 'web' ? 67 : insets.top;
+  const topInset = Platform.OS === 'web' ? 67 : Platform.OS === 'android' ? 0 : insets.top;
   const storeName = params.name || 'Subway';
   const cuisine = params.cuisine || 'Lanches';
   const rating = params.rating || '4.8';
@@ -282,7 +281,6 @@ export default function StoreScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.brandCream }]}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.brandDeepGreen} />
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}

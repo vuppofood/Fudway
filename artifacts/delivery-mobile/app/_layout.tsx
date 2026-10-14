@@ -1,9 +1,12 @@
 import React, { useEffect } from 'react';
+import { View } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import colors from '@/constants/colors';
+import { StatusBar } from 'expo-status-bar';
 import {
   Inter_400Regular,
   Inter_500Medium,
@@ -21,7 +24,12 @@ const queryClient = new QueryClient();
 
 function RootLayoutNav() {
   return (
-    <Stack screenOptions={{ headerBackTitle: 'Back' }}>
+    <Stack
+      screenOptions={{
+        headerBackTitle: 'Back',
+        contentStyle: { backgroundColor: colors.light.brandDeepGreen },
+      }}
+    >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="cart" options={{ headerShown: false }} />
       <Stack.Screen name="store" options={{ headerShown: false }} />
@@ -50,8 +58,11 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <ErrorBoundary>
         <QueryClientProvider client={queryClient}>
-          <GestureHandlerRootView>
+          <GestureHandlerRootView
+            style={{ flex: 1, backgroundColor: colors.light.brandDeepGreen }}
+          >
             <KeyboardProvider>
+              <StatusBar hidden />
               <RootLayoutNav />
             </KeyboardProvider>
           </GestureHandlerRootView>

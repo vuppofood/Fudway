@@ -6,7 +6,6 @@ import {
   Platform,
   Pressable,
   ScrollView,
-  StatusBar,
   StyleSheet,
   Text,
   TextInput,
@@ -38,7 +37,7 @@ const categoryOptions: CategoryOption[] = [
 export default function CategoriesScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const topInset = Platform.OS === 'web' ? 67 : insets.top;
+  const topInset = Platform.OS === 'web' ? 67 : Platform.OS === 'android' ? 0 : insets.top;
   const [search, setSearch] = useState('');
 
   const visibleCategories = useMemo(() => {
@@ -64,7 +63,6 @@ export default function CategoriesScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.brandCream }]}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.brandDeepGreen} />
       <View
         style={[
           styles.header,

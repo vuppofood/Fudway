@@ -7,7 +7,6 @@ import {
   Platform,
   Pressable,
   ScrollView,
-  StatusBar,
   StyleSheet,
   Text,
   TextInput,
@@ -50,7 +49,7 @@ const formatPrice = (value: number) =>
 export default function CartScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const topInset = Platform.OS === 'web' ? 67 : insets.top;
+  const topInset = Platform.OS === 'web' ? 67 : Platform.OS === 'android' ? 0 : insets.top;
   const [items, setItems] = useState<CartItem[]>(initialItems);
   const [quantities, setQuantities] = useState<Record<string, number>>({
     'subway-classico': 1,
@@ -114,7 +113,6 @@ export default function CartScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.brandDeepGreen }]}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.brandDeepGreen} />
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.page}

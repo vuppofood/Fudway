@@ -6,7 +6,6 @@ import {
   Platform,
   Pressable,
   ScrollView,
-  StatusBar,
   StyleSheet,
   Text,
   View,
@@ -68,7 +67,7 @@ const formatPrice = (value: number) =>
 export default function OrdersScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const topInset = Platform.OS === 'web' ? 67 : insets.top;
+  const topInset = Platform.OS === 'web' ? 67 : Platform.OS === 'android' ? 0 : insets.top;
   const [activeFilter, setActiveFilter] = useState<OrderFilter>('Todos');
 
   const visibleOrders = useMemo(
@@ -89,9 +88,16 @@ export default function OrdersScreen() {
   };
 
   return (
-    <View style={[styles.screen, { backgroundColor: colors.brandDeepGreen }]}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.brandDeepGreen} />
-      <View style={[styles.header, { paddingTop: topInset + 3 }]}>
+    <View style={[styles.screen, { backgroundColor: colors.brandCream }]}>
+      <View
+        style={[
+          styles.header,
+          {
+            backgroundColor: colors.brandDeepGreen,
+            paddingTop: topInset + (Platform.OS === 'android' ? 22 : 3),
+          },
+        ]}
+      >
         <Text style={styles.title}>Meus pedidos</Text>
       </View>
 

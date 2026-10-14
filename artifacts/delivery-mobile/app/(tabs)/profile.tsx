@@ -5,7 +5,6 @@ import {
   Platform,
   Pressable,
   ScrollView,
-  StatusBar,
   StyleSheet,
   Text,
   View,
@@ -26,11 +25,10 @@ const profileOptions = [
 export default function ProfileScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const topInset = Platform.OS === 'web' ? 67 : insets.top;
+  const topInset = Platform.OS === 'web' ? 67 : Platform.OS === 'android' ? 0 : insets.top;
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.card }]}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.brandDeepGreen} />
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
@@ -40,7 +38,7 @@ export default function ProfileScreen() {
             styles.profileHeader,
             {
               backgroundColor: colors.brandDeepGreen,
-              paddingTop: topInset + 14,
+              paddingTop: topInset + (Platform.OS === 'android' ? 24 : 14),
             },
           ]}
         >

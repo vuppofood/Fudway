@@ -5,7 +5,6 @@ import {
   Platform,
   Pressable,
   ScrollView,
-  StatusBar,
   StyleSheet,
   Text,
   TextInput,
@@ -351,11 +350,10 @@ export default function HomeScreen() {
     });
   }, [activeCategory, search]);
 
-  const topInset = Platform.OS === 'web' ? 67 : insets.top;
+  const topInset = Platform.OS === 'web' ? 67 : Platform.OS === 'android' ? 0 : insets.top;
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.brandCream }]}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.brandDeepGreen} />
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
@@ -364,7 +362,10 @@ export default function HomeScreen() {
         <View
           style={[
             styles.header,
-            { backgroundColor: colors.brandDeepGreen, paddingTop: topInset + 6 },
+            {
+              backgroundColor: colors.brandDeepGreen,
+              paddingTop: topInset + (Platform.OS === 'android' ? 24 : 6),
+            },
           ]}
         >
           <View style={styles.topBar}>
