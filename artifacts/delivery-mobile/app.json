@@ -13,14 +13,24 @@
     "ios": {
       "supportsTablet": false
     },
-    "android": {},
+    "android": {
+      "package": "com.vuppofood.vuppo"
+    },
     "web": {
       "favicon": "./assets/images/icon.png"
     },
-    "plugins": ["expo-router"],
+    "plugins": [
+      "expo-router"
+    ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "47b2e503-2c60-43af-b7e4-14fa4e2be4ff"
+      }
+    },
+    "owner": "vuppofood"
   }
 }
