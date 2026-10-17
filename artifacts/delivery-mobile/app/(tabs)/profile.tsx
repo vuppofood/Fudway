@@ -13,13 +13,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 
 const profileOptions = [
-  { label: 'Meus pedidos', icon: 'clipboard' as const },
+  { label: 'Dados da conta', icon: 'user' as const },
   { label: 'Favoritos', icon: 'heart' as const },
-  { label: 'Endereços de entrega', icon: 'map-pin' as const },
-  { label: 'Formas de pagamento', icon: 'credit-card' as const },
-  { label: 'Cupons e descontos', icon: 'tag' as const },
-  { label: 'Ajuda', icon: 'help-circle' as const },
-  { label: 'Configurações', icon: 'settings' as const },
+  { label: 'Endereço de entrega', icon: 'map-pin' as const },
+  { label: 'Código de entrega', icon: 'tag' as const },
+  { label: 'Cupons e descontos', icon: 'percent' as const },
+  { label: 'Ajuda', icon: 'headphones' as const },
+  { label: 'Configuração', icon: 'settings' as const },
 ];
 
 export default function ProfileScreen() {
@@ -28,45 +28,48 @@ export default function ProfileScreen() {
   const topInset = Platform.OS === 'web' ? 67 : Platform.OS === 'android' ? 0 : insets.top;
 
   return (
-    <View style={[styles.screen, { backgroundColor: colors.card }]}>
+    <View style={[styles.screen, { backgroundColor: colors.brandCream }]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
         <View
           style={[
-            styles.profileHeader,
+            styles.topArea,
             {
               backgroundColor: colors.brandDeepGreen,
               paddingTop: topInset + (Platform.OS === 'android' ? 24 : 14),
             },
           ]}
         >
-          <View style={styles.profileIdentity}>
-            <View style={[styles.avatar, { backgroundColor: colors.brandPaper }]}>
-              <Feather name="user" size={30} color={colors.brandGreen} />
+          <View pointerEvents="none" style={styles.headerAccentOne} />
+          <View pointerEvents="none" style={styles.headerAccentTwo} />
+          <Text style={styles.pageTitle}>Perfil</Text>
+        </View>
+
+        <View style={styles.content}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() =>
+              Alert.alert('Dados da conta', 'Esta opção ainda não está conectada.')
+            }
+            style={({ pressed }) => [
+              styles.profileIdentity,
+              { opacity: pressed ? 0.8 : 1 },
+            ]}
+          >
+            <View style={styles.avatar}>
+              <Feather name="user" size={28} color="#ffffff" />
             </View>
             <View style={styles.identityCopy}>
               <Text style={styles.profileName}>Keyson Reis Santos</Text>
               <Text style={styles.profileEmail}>keyson@email.com</Text>
             </View>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Editar perfil"
-              onPress={() =>
-                Alert.alert('Editar perfil', 'Esta opção ainda não está conectada.')
-              }
-              hitSlop={10}
-              style={styles.editButton}
-            >
-              <Feather name="edit-2" size={17} color={colors.brandPaper} />
-            </Pressable>
-          </View>
-        </View>
+            <Feather name="chevron-right" size={23} color="#626974" />
+          </Pressable>
 
-        <View style={styles.content}>
           <View style={styles.options}>
-            {profileOptions.map((option) => (
+            {profileOptions.map((option, index) => (
               <Pressable
                 accessibilityRole="button"
                 key={option.label}
@@ -78,36 +81,24 @@ export default function ProfileScreen() {
                   { opacity: pressed ? 0.65 : 1 },
                 ]}
               >
-                <Feather name={option.icon} size={19} color={colors.brandGreen} />
-                <Text style={[styles.optionText, { color: colors.foreground }]}>
-                  {option.label}
-                </Text>
-                <Feather
-                  name="chevron-right"
-                  size={18}
-                  color={colors.brandMutedGreen}
-                />
+                <View>
+                  <View style={styles.optionRow}>
+                    <View style={[styles.optionIcon, { backgroundColor: colors.brandMint }]}>
+                      <Feather name={option.icon} size={22} color={colors.brandDeepGreen} />
+                    </View>
+                    <Text style={[styles.optionText, { color: '#1A1A1A' }]}>
+                      {option.label}
+                    </Text>
+                    <Feather name="chevron-right" size={20} color="#626974" />
+                  </View>
+                  {index < profileOptions.length - 1 ? (
+                    <View style={[styles.optionDivider, { backgroundColor: colors.border }]} />
+                  ) : null}
+                </View>
               </Pressable>
             ))}
           </View>
 
-          <Pressable
-            accessibilityRole="button"
-            onPress={() =>
-              Alert.alert('Sair da conta', 'Esta tela está em modo de demonstração.')
-            }
-            style={({ pressed }) => [
-              styles.signOutButton,
-              {
-                backgroundColor: colors.brandYellow,
-                opacity: pressed ? 0.82 : 1,
-              },
-            ]}
-          >
-            <Text style={[styles.signOutText, { color: colors.brandDeepGreen }]}>
-              Sair da conta
-            </Text>
-          </Pressable>
         </View>
       </ScrollView>
     </View>
@@ -117,49 +108,94 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   scrollContent: { flexGrow: 1, paddingBottom: 100 },
-  profileHeader: {
-    paddingHorizontal: 18,
-    paddingBottom: 19,
+  topArea: {
+    minHeight: 132,
+    paddingHorizontal: 22,
+    paddingBottom: 44,
+    overflow: 'hidden',
+    borderBottomLeftRadius: 34,
+    borderBottomRightRadius: 34,
+  },
+  headerAccentOne: {
+    position: 'absolute',
+    width: 290,
+    height: 100,
+    right: -130,
+    top: 28,
+    borderRadius: 60,
+    backgroundColor: '#0b5735',
+    transform: [{ rotate: '-38deg' }],
+    opacity: 0.65,
+  },
+  headerAccentTwo: {
+    position: 'absolute',
+    width: 250,
+    height: 70,
+    right: 35,
+    top: 82,
+    borderRadius: 50,
+    backgroundColor: '#0b5735',
+    transform: [{ rotate: '-38deg' }],
+    opacity: 0.45,
+  },
+  pageTitle: {
+    marginTop: 10,
+    color: '#ffffff',
+    fontSize: 25,
+    lineHeight: 31,
+    fontWeight: '800',
   },
   profileIdentity: {
-    minHeight: 59,
+    minHeight: 66,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 11,
+    gap: 14,
+    marginBottom: 10,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
   },
   avatar: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#063a23',
   },
   identityCopy: { flex: 1, gap: 4 },
-  profileName: { color: '#ffffff', fontSize: 14, fontWeight: '700' },
-  profileEmail: { color: '#d1e0d7', fontSize: 11 },
-  editButton: { padding: 5 },
+  profileName: { color: '#151923', fontSize: 15, fontWeight: '700' },
+  profileEmail: { color: '#747b86', fontSize: 12 },
   content: {
     flexGrow: 1,
-    justifyContent: 'space-between',
-    paddingHorizontal: 18,
-    paddingTop: 7,
+    paddingHorizontal: 16,
     paddingBottom: 16,
+    marginTop: -31,
   },
-  options: { backgroundColor: '#ffffff' },
+  options: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 3,
+  },
   option: {
-    minHeight: 51,
+    minHeight: 48,
+    justifyContent: 'center',
+  },
+  optionRow: {
+    minHeight: 48,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 13,
-    paddingHorizontal: 2,
   },
-  optionText: { flex: 1, fontSize: 13, fontWeight: '500' },
-  signOutButton: {
-    minHeight: 47,
-    marginTop: 17,
-    borderRadius: 11,
+  optionDivider: { height: StyleSheet.hairlineWidth, marginLeft: 49 },
+  optionIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  signOutText: { fontSize: 13, fontWeight: '700' },
+  optionText: { flex: 1, fontSize: 14, fontWeight: '600' },
 });

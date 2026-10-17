@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { Image, View } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
@@ -14,27 +14,38 @@ import {
   Inter_700Bold,
   useFonts,
 } from '@expo-google-fonts/inter';
-import { Stack } from 'expo-router';
+import { Stack, usePathname } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
+const MIN_SPLASH_DURATION_MS = 1000;
+const SPLASH_LOGO_ASPECT_RATIO = 1247 / 201;
 
 function RootLayoutNav() {
+  const pathname = usePathname();
+  const isAuthenticationScreen = pathname === '/' || pathname === '/auth';
+
   return (
-    <Stack
-      screenOptions={{
-        headerBackTitle: 'Back',
-        contentStyle: { backgroundColor: colors.light.brandDeepGreen },
-      }}
-    >
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="cart" options={{ headerShown: false }} />
-      <Stack.Screen name="store" options={{ headerShown: false }} />
-      <Stack.Screen name="category" options={{ headerShown: false }} />
-    </Stack>
+    <>
+      <StatusBar hidden={!isAuthenticationScreen} style="dark" />
+      <Stack
+        initialRouteName="index"
+        screenOptions={{
+          headerBackTitle: 'Back',
+          contentStyle: { backgroundColor: colors.light.brandDeepGreen },
+        }}
+      >
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="auth" options={{ headerShown: false }} />
+        <Stack.Screen name="cart" options={{ headerShown: false }} />
+        <Stack.Screen name="store" options={{ headerShown: false }} />
+        <Stack.Screen name="category" options={{ headerShown: false }} />
+      </Stack>
+    </>
   );
 }
 
@@ -45,14 +56,50 @@ export default function RootLayout() {
     Inter_600SemiBold,
     Inter_700Bold,
   });
+  const [appReady, setAppReady] = useState(false);
+  const splashStartedAt = useRef(Date.now());
 
   useEffect(() => {
-    if (fontsLoaded || fontError) {
+    const frame = requestAnimationFrame(() => {
       SplashScreen.hideAsync();
-    }
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
+  useEffect(() => {
+    if (!fontsLoaded && !fontError) return;
+
+    const remainingDuration = Math.max(
+      0,
+      MIN_SPLASH_DURATION_MS - (Date.now() - splashStartedAt.current),
+    );
+    const timeout = setTimeout(() => setAppReady(true), remainingDuration);
+    return () => clearTimeout(timeout);
   }, [fontsLoaded, fontError]);
 
-  if (!fontsLoaded && !fontError) return null;
+  if (!appReady) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: '#05462B',
+        }}
+      >
+        <Image
+          source={require('@/assets/images/fudway_logo_white_transparent.png')}
+          resizeMode="contain"
+          style={{
+            width: '56%',
+            maxWidth: 280,
+            aspectRatio: SPLASH_LOGO_ASPECT_RATIO,
+          }}
+        />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaProvider>
@@ -62,7 +109,6 @@ export default function RootLayout() {
             style={{ flex: 1, backgroundColor: colors.light.brandDeepGreen }}
           >
             <KeyboardProvider>
-              <StatusBar hidden />
               <RootLayoutNav />
             </KeyboardProvider>
           </GestureHandlerRootView>

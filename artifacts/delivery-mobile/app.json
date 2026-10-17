@@ -8,7 +8,10 @@
     "scheme": "delivery-mobile",
     "userInterfaceStyle": "light",
     "splash": {
-      "backgroundColor": "#063a23"
+      "image": "./assets/images/fudway_logo_white_transparent.png",
+      "imageWidth": 200,
+      "resizeMode": "contain",
+      "backgroundColor": "#05462B"
     },
     "ios": {
       "supportsTablet": false
@@ -20,7 +23,16 @@
       "favicon": "./assets/images/icon.png"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/fudway_logo_white_transparent.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#05462B"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

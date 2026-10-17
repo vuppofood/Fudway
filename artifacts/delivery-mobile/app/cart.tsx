@@ -82,14 +82,6 @@ export default function CartScreen() {
     setItems((current) => current.filter((item) => item.id !== id));
   };
 
-  const clearCart = () => {
-    if (items.length === 0) return;
-    Alert.alert('Esvaziar carrinho', 'Deseja remover todos os itens?', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Esvaziar', style: 'destructive', onPress: () => setItems([]) },
-    ]);
-  };
-
   const applyCoupon = () => {
     if (couponText.trim().toUpperCase() === 'LANCHE10') {
       setCouponApplied(true);
@@ -112,12 +104,17 @@ export default function CartScreen() {
   };
 
   return (
-    <View style={[styles.screen, { backgroundColor: colors.brandDeepGreen }]}>
+    <View style={[styles.screen, { backgroundColor: colors.card }]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.page}
       >
-        <View style={[styles.header, { paddingTop: topInset + 3 }]}>
+        <View
+          style={[
+            styles.header,
+            { paddingTop: topInset + 3, backgroundColor: colors.brandDeepGreen },
+          ]}
+        >
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Voltar"
@@ -128,19 +125,7 @@ export default function CartScreen() {
             <Feather name="arrow-left" size={22} color="#ffffff" />
           </Pressable>
           <Text style={styles.headerTitle}>Meu carrinho</Text>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Esvaziar carrinho"
-            onPress={clearCart}
-            hitSlop={10}
-            style={styles.headerAction}
-          >
-            <Feather
-              name="trash-2"
-              size={19}
-              color={items.length > 0 ? '#ffffff' : colors.brandMutedGreen}
-            />
-          </Pressable>
+          <View style={styles.headerAction} />
         </View>
 
         <View
