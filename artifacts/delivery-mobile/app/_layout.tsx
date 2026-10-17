@@ -26,7 +26,12 @@ const SPLASH_LOGO_ASPECT_RATIO = 1247 / 201;
 
 function RootLayoutNav() {
   const pathname = usePathname();
-  const isAuthenticationScreen = pathname === '/' || pathname === '/auth';
+  const isAuthenticationScreen =
+    pathname === '/' ||
+    pathname === '/auth' ||
+    pathname === '/login' ||
+    pathname === '/reset-password' ||
+    pathname === '/signup';
 
   return (
     <>
@@ -41,6 +46,9 @@ function RootLayoutNav() {
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="auth" options={{ headerShown: false }} />
+        <Stack.Screen name="login" options={{ headerShown: false }} />
+        <Stack.Screen name="reset-password" options={{ headerShown: false }} />
+        <Stack.Screen name="signup" options={{ headerShown: false }} />
         <Stack.Screen name="cart" options={{ headerShown: false }} />
         <Stack.Screen name="store" options={{ headerShown: false }} />
         <Stack.Screen name="category" options={{ headerShown: false }} />

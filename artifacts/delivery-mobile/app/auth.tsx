@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  Alert,
   Image,
   Pressable,
   StyleSheet,
@@ -8,17 +7,18 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const BRAND_GREEN = '#06462B';
 const LOGO_ASPECT_RATIO = 2172 / 724;
-const GOOGLE_BUTTON_TOP = 0.463;
+const SIGN_IN_BUTTON_TOP = 0.463;
 const AUTH_BUTTON_HEIGHT = 0.067;
-const PHONE_BUTTON_TOP = 0.592;
+const CREATE_ACCOUNT_BUTTON_TOP = 0.592;
 const DIVIDER_HEIGHT = 0.029;
 
 export default function AuthenticationScreen() {
+  const router = useRouter();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const contentHeight = height - insets.top - insets.bottom;
@@ -48,31 +48,20 @@ export default function AuthenticationScreen() {
             {
               width: width * 0.82,
               left: width * 0.09,
-              top: contentHeight * GOOGLE_BUTTON_TOP,
+              top: contentHeight * SIGN_IN_BUTTON_TOP,
               height: contentHeight * AUTH_BUTTON_HEIGHT,
             },
           ]}
         >
           <Pressable
             accessibilityRole="button"
-            onPress={() =>
-              Alert.alert(
-                'Entrar com Google',
-                'A autenticação com Google ainda não está conectada.',
-              )
-            }
+            onPress={() => router.push('./login')}
             style={({ pressed }) => [
-              styles.googleButton,
+              styles.signInButton,
               { opacity: pressed ? 0.82 : 1 },
             ]}
           >
-            <MaterialCommunityIcons
-              name="google"
-              size={28}
-              color="#4285F4"
-            />
-            <View style={styles.buttonDivider} />
-            <Text style={styles.googleLabel}>Entrar com Google</Text>
+            <Text style={styles.signInLabel}>Entrar</Text>
           </Pressable>
         </View>
         <View
@@ -83,7 +72,7 @@ export default function AuthenticationScreen() {
               left: width * 0.1,
               top:
                 contentHeight *
-                ((GOOGLE_BUTTON_TOP + AUTH_BUTTON_HEIGHT + PHONE_BUTTON_TOP) /
+                ((SIGN_IN_BUTTON_TOP + AUTH_BUTTON_HEIGHT + CREATE_ACCOUNT_BUTTON_TOP) /
                   2 -
                   DIVIDER_HEIGHT / 2),
               height: contentHeight * DIVIDER_HEIGHT,
@@ -96,31 +85,24 @@ export default function AuthenticationScreen() {
         </View>
         <View
           style={[
-            styles.phoneAction,
+            styles.createAccountAction,
             {
               width: width * 0.82,
               left: width * 0.09,
-              top: contentHeight * PHONE_BUTTON_TOP,
+              top: contentHeight * CREATE_ACCOUNT_BUTTON_TOP,
               height: contentHeight * AUTH_BUTTON_HEIGHT,
             },
           ]}
         >
           <Pressable
             accessibilityRole="button"
-            onPress={() =>
-              Alert.alert(
-                'Entrar com telefone',
-                'A autenticação por telefone ainda não está conectada.',
-              )
-            }
+            onPress={() => router.push('./signup')}
             style={({ pressed }) => [
-              styles.phoneButton,
+              styles.createAccountButton,
               { opacity: pressed ? 0.72 : 1 },
             ]}
           >
-            <Feather name="phone" size={27} color={BRAND_GREEN} />
-            <View style={[styles.buttonDivider, styles.phoneDivider]} />
-            <Text style={styles.phoneLabel}>Entrar com Telefone</Text>
+            <Text style={styles.createAccountLabel}>Criar nova conta</Text>
           </Pressable>
         </View>
       </View>
@@ -144,7 +126,7 @@ const styles = StyleSheet.create({
   actions: {
     position: 'absolute',
   },
-  googleButton: {
+  signInButton: {
     height: '100%',
     flexDirection: 'row',
     alignItems: 'center',
@@ -154,12 +136,7 @@ const styles = StyleSheet.create({
     backgroundColor: BRAND_GREEN,
     paddingHorizontal: 20,
   },
-  buttonDivider: {
-    width: 1,
-    height: 30,
-    backgroundColor: 'rgba(255,255,255,0.55)',
-  },
-  googleLabel: {
+  signInLabel: {
     color: '#FFFFFF',
     fontSize: 17,
     fontWeight: '600',
@@ -181,7 +158,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
   },
-  phoneButton: {
+  createAccountButton: {
     height: '100%',
     flexDirection: 'row',
     alignItems: 'center',
@@ -193,13 +170,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 20,
   },
-  phoneAction: {
+  createAccountAction: {
     position: 'absolute',
   },
-  phoneDivider: {
-    backgroundColor: '#D0D0D0',
-  },
-  phoneLabel: {
+  createAccountLabel: {
     color: BRAND_GREEN,
     fontSize: 17,
     fontWeight: '600',
