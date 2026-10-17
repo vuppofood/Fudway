@@ -32,10 +32,18 @@ function RootLayoutNav() {
     pathname === '/login' ||
     pathname === '/reset-password' ||
     pathname === '/signup';
+  const isHomeScreen =
+    pathname === '/' ||
+    pathname.endsWith('/index') ||
+    pathname.endsWith('/(tabs)');
+  const isProfileScreen = pathname.endsWith('/profile');
 
   return (
     <>
-      <StatusBar hidden={!isAuthenticationScreen} style="dark" />
+      <StatusBar
+        hidden={!(isAuthenticationScreen || isHomeScreen || isProfileScreen)}
+        style={isProfileScreen ? 'light' : 'dark'}
+      />
       <Stack
         initialRouteName="index"
         screenOptions={{
@@ -48,6 +56,7 @@ function RootLayoutNav() {
         <Stack.Screen name="auth" options={{ headerShown: false }} />
         <Stack.Screen name="login" options={{ headerShown: false }} />
         <Stack.Screen name="reset-password" options={{ headerShown: false }} />
+        <Stack.Screen name="location" options={{ headerShown: false }} />
         <Stack.Screen name="signup" options={{ headerShown: false }} />
         <Stack.Screen name="cart" options={{ headerShown: false }} />
         <Stack.Screen name="store" options={{ headerShown: false }} />

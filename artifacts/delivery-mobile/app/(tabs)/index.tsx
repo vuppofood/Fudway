@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   Alert,
   Image,
@@ -12,22 +12,41 @@ import {
 } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { restaurants, type Restaurant } from '@/constants/restaurants';
+import { getDeliveryAddress } from '@/constants/delivery-address';
 
 type Category = {
   name: string;
+  label: string;
+  route: string;
+  image?: number;
 };
 
 const categories: Category[] = [
-  { name: 'Lanches' },
-  { name: 'Restaurantes' },
-  { name: 'Padaria' },
-  { name: 'Doces e bolos' },
-  { name: 'Bebidas' },
+  {
+    name: 'Lanches',
+    label: 'Hambúrguer',
+    route: 'Lanches',
+    image: require('../../assets/images/restaurant-burger.jpg'),
+  },
+  { name: 'Restaurantes', label: 'Pizza', route: 'Restaurantes' },
+  {
+    name: 'Padaria',
+    label: 'Porções',
+    route: 'Lanches',
+    image: require('../../assets/images/cart-potatoes.png'),
+  },
+  { name: 'Doces e bolos', label: 'Sobremesas', route: 'Doces e bolos' },
+  {
+    name: 'Bebidas',
+    label: 'Bebidas',
+    route: 'Bebidas',
+    image: require('../../assets/images/cart-drink.png'),
+  },
 ];
 
 function CategoryButton({
@@ -48,13 +67,17 @@ function CategoryButton({
       <View
         style={[
           styles.categoryIcon,
-          { backgroundColor: colors.brandGreen },
+          category.name === 'Lanches' ? styles.categoryIconSelected : null,
         ]}
       >
-        <CategoryArtwork category={category} palette={colors} />
+        {category.image ? (
+          <Image source={category.image} style={styles.categoryImage} resizeMode="cover" />
+        ) : (
+          <CategoryArtwork category={category} palette={colors} />
+        )}
       </View>
-      <Text style={[styles.categoryLabel, { color: colors.foreground }]}>
-        {category.name}
+      <Text numberOfLines={1} style={[styles.categoryLabel, { color: colors.foreground }]}>
+        {category.label}
       </Text>
     </Pressable>
   );
@@ -179,9 +202,9 @@ function CategoryArtwork({
   if (category.name === 'Restaurantes') {
     return (
       <MaterialCommunityIcons
-        name="silverware-fork-knife"
-        size={35}
-        color={yellow}
+        name="pizza"
+        size={40}
+        color="#e66d27"
       />
     );
   }
@@ -285,6 +308,15 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [search, setSearch] = useState('');
+  const [deliveryAddress, setDeliveryAddressState] = useState(
+    getDeliveryAddress,
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      setDeliveryAddressState(getDeliveryAddress());
+    }, []),
+  );
 
   const visibleRestaurants = useMemo(() => {
     const query = search.trim().toLocaleLowerCase('pt-BR');
@@ -300,7 +332,7 @@ export default function HomeScreen() {
   const topInset = Platform.OS === 'web' ? 67 : Platform.OS === 'android' ? 0 : insets.top;
 
   return (
-    <View style={[styles.screen, { backgroundColor: colors.brandCream }]}>
+    <View style={[styles.screen, { backgroundColor: colors.card }]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
@@ -310,7 +342,7 @@ export default function HomeScreen() {
           style={[
             styles.header,
             {
-              backgroundColor: colors.brandDeepGreen,
+              backgroundColor: '#ffffff',
               paddingTop: topInset + (Platform.OS === 'android' ? 24 : 6),
             },
           ]}
@@ -319,39 +351,37 @@ export default function HomeScreen() {
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Alterar endereço de entrega"
-              onPress={() =>
-                Alert.alert('Endereço de entrega', 'Rua das Palmeiras, 258')
-              }
+              onPress={() => router.push('../location')}
               style={styles.addressButton}
             >
-              <Feather name="map-pin" size={29} color={colors.brandYellow} />
+              <Feather name="map-pin" size={27} color={colors.brandYellow} />
               <View style={styles.addressText}>
                 <Text style={styles.deliverLabel}>Entregar em</Text>
                 <View style={styles.addressLine}>
-                  <Text style={styles.addressTitle}>Rua das Palmeiras, 258</Text>
-                  <Feather name="chevron-down" size={19} color={colors.brandYellow} />
+                  <Text style={styles.addressTitle}>{deliveryAddress}</Text>
+                  <Feather name="chevron-down" size={19} color="#1a1a1a" />
                 </View>
               </View>
             </Pressable>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Abrir carrinho, 1 item"
-              onPress={() => router.push('/cart')}
-              style={styles.cartButton}
+              accessibilityLabel="Abrir notificações"
+              onPress={() =>
+                Alert.alert('Notificações', 'Você não tem novas notificações.')
+              }
+              style={styles.headerActionButton}
             >
-              <Feather name="shopping-cart" size={25} color="#ffffff" />
-              <View style={[styles.cartBadge, { backgroundColor: colors.brandYellow }]}>
-                <Text style={styles.cartBadgeText}>1</Text>
-              </View>
+              <Feather name="bell" size={24} color="#1a1a1a" />
+              <View style={styles.notificationDot} />
             </Pressable>
           </View>
 
-          <View style={[styles.searchBar, { backgroundColor: '#285a43' }]}>
-            <Feather name="search" size={22} color="#ffffff" />
+          <View style={styles.searchBar}>
+            <Feather name="search" size={22} color="#263238" />
             <TextInput
               accessibilityLabel="Buscar restaurantes"
-              placeholder="Busque por lanches, restaurantes..."
-              placeholderTextColor="#c0d0c7"
+              placeholder="Busque por hambúrguer, pizza, bebidas..."
+              placeholderTextColor="#7b858c"
               value={search}
               onChangeText={setSearch}
               returnKeyType="search"
@@ -364,57 +394,13 @@ export default function HomeScreen() {
                 onPress={() => setSearch('')}
                 hitSlop={10}
               >
-                <Feather name="x-circle" size={19} color="#d7e2dc" />
+                <Feather name="x-circle" size={19} color="#68747b" />
               </Pressable>
             ) : null}
           </View>
         </View>
 
         <View style={styles.content}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Ver ofertas"
-            onPress={() =>
-              Alert.alert(
-                'Ofertas especiais',
-                'Peça seu lanche favorito e aproveite as promoções de hoje.',
-              )
-            }
-            style={({ pressed }) => [styles.promoBanner, { opacity: pressed ? 0.94 : 1 }]}
-          >
-            <Image
-              source={require('../../assets/images/promo-hero.jpg')}
-              style={styles.promoImage}
-              resizeMode="cover"
-            />
-            <Image
-              source={require('../../assets/images/restaurant-burger.jpg')}
-              style={styles.promoBurger}
-              resizeMode="cover"
-            />
-            <LinearGradient
-              colors={['rgba(3, 24, 13, 0.98)', 'rgba(3, 24, 13, 0)']}
-              start={{ x: 0, y: 0.5 }}
-              end={{ x: 1, y: 0.5 }}
-              style={styles.promoBlend}
-            />
-            <View style={styles.promoCopy}>
-              <View style={[styles.promoBadge, { backgroundColor: colors.brandYellow }]}>
-                <Text style={styles.promoBadgeText}>PROMOÇÃO</Text>
-              </View>
-              <Text style={styles.promoHeadline}>
-                Mais que{'\n'}um lanche,{'\n'}
-                <Text style={{ color: colors.brandYellow }}>é satisfação!</Text>
-              </Text>
-              <View style={[styles.promoCta, { backgroundColor: colors.brandYellow }]}>
-                <Text style={styles.promoCtaText}>Ver ofertas</Text>
-                <Feather name="arrow-right" size={17} color={colors.brandDeepGreen} />
-              </View>
-            </View>
-            <View style={styles.burstOne} />
-            <View style={styles.burstTwo} />
-          </Pressable>
-
           <View style={styles.categoriesRow}>
             {categories.map((category) => (
               <CategoryButton
@@ -423,12 +409,63 @@ export default function HomeScreen() {
                 onPress={() =>
                   router.push({
                     pathname: '/category',
-                    params: { category: category.name },
+                    params: { category: category.route },
                   })
                 }
               />
             ))}
           </View>
+
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Oferta especial de hambúrguer artesanal"
+            onPress={() =>
+              Alert.alert(
+                'Oferta especial',
+                'Peça seu hambúrguer favorito e aproveite as ofertas de hoje.',
+              )
+            }
+            style={({ pressed }) => [
+              styles.heroBanner,
+              { opacity: pressed ? 0.92 : 1 },
+            ]}
+          >
+            <Image
+              source={require('../../assets/images/promo-hero.jpg')}
+              style={styles.heroImage}
+              resizeMode="cover"
+            />
+            <LinearGradient
+              colors={['rgba(10, 15, 11, 0.96)', 'rgba(10, 15, 11, 0.72)', 'rgba(10, 15, 11, 0.02)']}
+              locations={[0, 0.48, 1]}
+              start={{ x: 0, y: 0.5 }}
+              end={{ x: 1, y: 0.5 }}
+              style={StyleSheet.absoluteFill}
+            />
+            <View style={styles.heroCopy}>
+              <View style={styles.heroBadge}>
+                <Feather name="tag" size={11} color="#ffffff" />
+                <Text style={styles.heroBadgeText}>OFERTA ESPECIAL</Text>
+              </View>
+              <Text style={styles.heroTitle}>
+                HAMBÚRGUER{'\n'}
+                <Text style={styles.heroTitleAccent}>ARTESANAL</Text>
+              </Text>
+              <Text style={styles.heroDescription}>
+                Sabor de outro nível,{'\n'}na sua casa.
+              </Text>
+              <View style={styles.heroButton}>
+                <Text style={styles.heroButtonText}>Pedir agora</Text>
+                <Feather name="arrow-right" size={16} color="#073a24" />
+              </View>
+            </View>
+            <View style={styles.heroPagination}>
+              <View style={[styles.heroPageDot, styles.heroPageDotActive]} />
+              <View style={styles.heroPageDot} />
+              <View style={styles.heroPageDot} />
+              <View style={styles.heroPageDot} />
+            </View>
+          </Pressable>
 
           <View style={styles.featuredSection}>
             <View style={styles.sectionHeading}>
@@ -479,18 +516,13 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   scrollContent: { flexGrow: 1, paddingBottom: 20 },
-  header: {
-    paddingHorizontal: 20,
-    paddingBottom: 17,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-  },
+  header: { paddingHorizontal: 20, paddingBottom: 13 },
   topBar: {
     minHeight: 56,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 15,
+    marginBottom: 17,
   },
   addressButton: {
     flex: 1,
@@ -499,125 +531,127 @@ const styles = StyleSheet.create({
     gap: 13,
   },
   addressText: { flexShrink: 1 },
-  deliverLabel: { color: '#d1e0d7', fontSize: 12, marginBottom: 2 },
+  deliverLabel: { color: '#626f78', fontSize: 12, marginBottom: 2 },
   addressLine: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  addressTitle: { color: '#ffffff', fontSize: 16, fontWeight: '700' },
-  cartButton: {
+  addressTitle: { color: '#171c20', fontSize: 16, fontWeight: '700' },
+  headerActionButton: {
+    position: 'relative',
     width: 51,
     height: 51,
     borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.09)',
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 14,
   },
-  cartBadge: {
+  notificationDot: {
     position: 'absolute',
-    top: -3,
-    right: -2,
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cartBadgeText: { color: '#103a27', fontSize: 11, fontWeight: '800' },
-  searchBar: {
-    minHeight: 48,
-    borderRadius: 25,
+    top: 8,
+    right: 8,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#ed2635',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.23)',
-    paddingHorizontal: 15,
+    borderColor: '#ffffff',
+  },
+  searchBar: {
+    minHeight: 52,
+    borderRadius: 18,
+    paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
+    backgroundColor: '#f1f3f5',
   },
-  searchInput: { flex: 1, color: '#ffffff', fontSize: 14, paddingVertical: 9 },
-  content: { paddingHorizontal: 13, paddingTop: 12, paddingBottom: 100 },
-  promoBanner: {
-    height: 205,
-    overflow: 'hidden',
-    borderRadius: 22,
+  searchInput: { flex: 1, color: '#20262a', fontSize: 14, paddingVertical: 9 },
+  content: { paddingHorizontal: 13, paddingTop: 0, paddingBottom: 100 },
+  categoriesRow: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingTop: 10,
+    paddingBottom: 15,
+  },
+  categoryItem: { alignItems: 'center', flex: 1, gap: 5 },
+  categoryIcon: {
+    width: '100%',
+    height: 55,
+    borderRadius: 12,
+    alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#0b3924',
+    overflow: 'hidden',
+    backgroundColor: '#f1f3f5',
+    borderWidth: 1,
+    borderColor: '#edf0f2',
   },
-  promoImage: { ...StyleSheet.absoluteFill },
-  promoBurger: {
-    position: 'absolute',
-    top: 0,
-    right: -8,
-    width: '57%',
+  categoryIconSelected: { borderColor: '#54d69a', borderWidth: 1.5, backgroundColor: '#e8f8ef' },
+  categoryImage: { width: '88%', height: '88%', borderRadius: 10 },
+  categoryLabel: { fontSize: 10, fontWeight: '600', textAlign: 'center' },
+  heroBanner: {
+    height: 184,
+    overflow: 'hidden',
+    borderRadius: 18,
+    backgroundColor: '#172216',
+    marginBottom: 22,
+  },
+  heroImage: {
+    ...StyleSheet.absoluteFill,
+    width: '100%',
     height: '100%',
   },
-  promoBlend: {
+  heroCopy: {
     position: 'absolute',
-    top: 0,
-    left: '38%',
-    width: '25%',
-    height: '100%',
+    left: 13,
+    top: 11,
+    alignItems: 'flex-start',
   },
-  promoCopy: { zIndex: 2, paddingLeft: 16, alignItems: 'flex-start' },
-  promoBadge: {
-    borderRadius: 11,
-    paddingHorizontal: 9,
-    paddingVertical: 4,
+  heroBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    borderRadius: 12,
+    backgroundColor: '#07864a',
+    paddingHorizontal: 8,
+    paddingVertical: 5,
     marginBottom: 8,
   },
-  promoBadgeText: { color: '#16351f', fontWeight: '800', fontSize: 10 },
-  promoHeadline: {
+  heroBadgeText: { color: '#ffffff', fontSize: 9, fontWeight: '800' },
+  heroTitle: {
     color: '#ffffff',
-    fontSize: 24,
-    lineHeight: 27,
-    letterSpacing: -0.6,
-    fontWeight: '800',
+    fontSize: 23,
+    lineHeight: 24,
+    letterSpacing: -0.45,
+    fontWeight: '900',
   },
-  promoCta: {
-    marginTop: 11,
-    minHeight: 38,
-    paddingHorizontal: 15,
-    borderRadius: 20,
+  heroTitleAccent: { color: '#53d78d' },
+  heroDescription: {
+    color: '#ffffff',
+    fontSize: 10,
+    lineHeight: 13,
+    marginTop: 4,
+  },
+  heroButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    minHeight: 30,
+    borderRadius: 18,
+    backgroundColor: '#53d78d',
+    paddingHorizontal: 13,
+    marginTop: 7,
   },
-  promoCtaText: { color: '#173b24', fontSize: 13, fontWeight: '700' },
-  burstOne: {
+  heroButtonText: { color: '#073a24', fontSize: 11, fontWeight: '700' },
+  heroPagination: {
     position: 'absolute',
-    zIndex: 1,
-    top: 38,
-    right: '45%',
-    height: 22,
-    width: 4,
-    borderRadius: 3,
-    backgroundColor: '#f7c900',
-    transform: [{ rotate: '-17deg' }],
-  },
-  burstTwo: {
-    position: 'absolute',
-    zIndex: 1,
-    top: 58,
-    right: '49%',
-    height: 19,
-    width: 4,
-    borderRadius: 3,
-    backgroundColor: '#f7c900',
-    transform: [{ rotate: '-48deg' }],
-  },
-  categoriesRow: {
+    bottom: 8,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
-    gap: 12,
-    paddingTop: 18,
-    paddingBottom: 25,
-  },
-  categoryItem: { alignItems: 'center', flex: 1, gap: 7 },
-  categoryIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
+    gap: 7,
   },
-  categoryLabel: { fontSize: 12, fontWeight: '600', textAlign: 'center' },
+  heroPageDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#ffffff99' },
+  heroPageDotActive: { backgroundColor: '#53d78d', width: 9, height: 9 },
   featuredSection: { marginHorizontal: 1 },
   sectionHeading: {
     flexDirection: 'row',

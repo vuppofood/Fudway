@@ -195,12 +195,12 @@ export default function CategoryScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.brandCream }]}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.brandDeepGreen} />
+      <StatusBar barStyle="dark-content" backgroundColor={colors.brandCream} />
       <View
         style={[
           styles.header,
           {
-            backgroundColor: colors.brandDeepGreen,
+            backgroundColor: colors.brandCream,
             paddingTop: topInset + 8,
           },
         ]}
@@ -212,21 +212,26 @@ export default function CategoryScreen() {
             testID="category-back"
             onPress={() => router.back()}
             hitSlop={10}
-            style={styles.backButton}
+            style={[styles.backButton, { backgroundColor: colors.brandMint }]}
           >
-            <Feather name="arrow-left" size={21} color="#ffffff" />
+            <Feather name="arrow-left" size={21} color={colors.brandDeepGreen} />
           </Pressable>
-          <View style={[styles.searchBar, { backgroundColor: '#285a43' }]}>
-            <Feather name="search" size={19} color="#ffffff" />
+          <View
+            style={[
+              styles.searchBar,
+              { backgroundColor: '#ffffff', borderColor: colors.brandDeepGreen },
+            ]}
+          >
+            <Feather name="search" size={19} color={colors.brandDeepGreen} />
             <TextInput
               accessibilityLabel={`Buscar em ${categoryName}`}
               testID="category-search"
               value={search}
               onChangeText={setSearch}
               placeholder="Buscar loja ou tipo de comida"
-              placeholderTextColor="#c0d0c7"
+              placeholderTextColor={colors.mutedForeground}
               returnKeyType="search"
-              style={styles.searchInput}
+              style={[styles.searchInput, { color: colors.foreground }]}
             />
             {search ? (
               <Pressable
@@ -235,7 +240,7 @@ export default function CategoryScreen() {
                 onPress={() => setSearch('')}
                 hitSlop={8}
               >
-                <Feather name="x-circle" size={17} color="#d7e2dc" />
+                <Feather name="x-circle" size={17} color={colors.brandMutedGreen} />
               </Pressable>
             ) : null}
           </View>
@@ -358,9 +363,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   header: {
     paddingHorizontal: 19,
-    paddingBottom: 19,
-    borderBottomLeftRadius: 22,
-    borderBottomRightRadius: 22,
+    paddingBottom: 10,
   },
   headerTools: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   backButton: {
@@ -369,18 +372,19 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.10)',
+    backgroundColor: '#e9f3ed',
   },
   searchBar: {
     flex: 1,
     minHeight: 46,
     borderRadius: 24,
+    borderWidth: 1,
     paddingHorizontal: 14,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
   },
-  searchInput: { flex: 1, color: '#ffffff', fontSize: 13, paddingVertical: 9 },
+  searchInput: { flex: 1, fontSize: 13, paddingVertical: 9 },
   content: { flexGrow: 1, paddingHorizontal: 15, paddingTop: 21 },
   filtersViewport: { marginBottom: 17 },
   filterGrid: { flexDirection: 'row', gap: 5 },

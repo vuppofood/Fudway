@@ -3,14 +3,12 @@ import { Feather } from '@expo/vector-icons';
 import {
   Alert,
   Image,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 
 type OrderFilter = 'Todos' | 'Em andamento' | 'Entregues';
@@ -66,8 +64,6 @@ const formatPrice = (value: number) =>
 
 export default function OrdersScreen() {
   const colors = useColors();
-  const insets = useSafeAreaInsets();
-  const topInset = Platform.OS === 'web' ? 67 : Platform.OS === 'android' ? 0 : insets.top;
   const [activeFilter, setActiveFilter] = useState<OrderFilter>('Todos');
 
   const visibleOrders = useMemo(
@@ -89,18 +85,6 @@ export default function OrdersScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.brandCream }]}>
-      <View
-        style={[
-          styles.header,
-          {
-            backgroundColor: colors.brandDeepGreen,
-            paddingTop: topInset + (Platform.OS === 'android' ? 22 : 3),
-          },
-        ]}
-      >
-        <Text style={styles.title}>Meus pedidos</Text>
-      </View>
-
       <ScrollView
         style={[styles.content, { backgroundColor: colors.brandCream }]}
         contentContainerStyle={styles.contentInner}
@@ -209,16 +193,6 @@ export default function OrdersScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  header: {
-    paddingHorizontal: 19,
-    paddingBottom: 16,
-  },
-  title: {
-    color: '#ffffff',
-    fontSize: 22,
-    fontWeight: '800',
-    letterSpacing: -0.35,
-  },
   content: {
     flex: 1,
     marginHorizontal: 8,
