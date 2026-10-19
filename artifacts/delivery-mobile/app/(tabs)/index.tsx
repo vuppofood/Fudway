@@ -40,13 +40,13 @@ const categories: Category[] = [
     route: 'Lanches',
     image: require('../../assets/images/cart-potatoes.png'),
   },
-  { name: 'Doces e bolos', label: 'Sobremesas', route: 'Doces e bolos' },
   {
     name: 'Bebidas',
     label: 'Bebidas',
     route: 'Bebidas',
     image: require('../../assets/images/cart-drink.png'),
   },
+  { name: 'Doces e bolos', label: 'Sobremesas', route: 'Doces e bolos' },
 ];
 
 function CategoryButton({
@@ -242,7 +242,15 @@ function CategoryArtwork({
   );
 }
 
-function RestaurantCard({ restaurant }: { restaurant: Restaurant }) {
+function RestaurantCard({
+  restaurant,
+  favorite,
+  onToggleFavorite,
+}: {
+  restaurant: Restaurant;
+  favorite: boolean;
+  onToggleFavorite: () => void;
+}) {
   const colors = useColors();
   const router = useRouter();
 
@@ -261,14 +269,11 @@ function RestaurantCard({ restaurant }: { restaurant: Restaurant }) {
           },
         })
       }
-      style={({ pressed }) => [
-        styles.restaurantCard,
-        { borderColor: colors.border, opacity: pressed ? 0.88 : 1 },
-      ]}
+      style={({ pressed }) => [styles.restaurantCard, { borderColor: colors.border, opacity: pressed ? 0.9 : 1 }]}
     >
       <View style={styles.restaurantImage}>
         {restaurant.image ? (
-          <Image source={restaurant.image} style={styles.restaurantPhoto} />
+          <Image source={restaurant.image} style={styles.restaurantPhoto} resizeMode="cover" />
         ) : (
           <View style={styles.subwayArtwork}>
             <Text style={styles.subwayWordmark}>
@@ -276,26 +281,40 @@ function RestaurantCard({ restaurant }: { restaurant: Restaurant }) {
             </Text>
           </View>
         )}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={favorite ? `Remover ${restaurant.name} dos favoritos` : `Favoritar ${restaurant.name}`}
+          accessibilityState={{ selected: favorite }}
+          onPress={(event) => {
+            event.stopPropagation();
+            onToggleFavorite();
+          }}
+          hitSlop={8}
+          style={styles.favoriteButton}
+        >
+          <Feather name="heart" size={17} color={favorite ? '#ed2635' : '#ffffff'} />
+        </Pressable>
       </View>
       <View style={styles.restaurantInfo}>
-        <View style={styles.restaurantNameRow}>
-          <Text numberOfLines={1} style={styles.restaurantName}>
-            {restaurant.name}
-          </Text>
-          {restaurant.verified ? (
-            <MaterialCommunityIcons
-              name="check-decagram"
-              size={14}
-              color={colors.brandGreen}
-            />
-          ) : null}
-        </View>
+        <Text numberOfLines={1} style={[styles.restaurantName, { color: colors.foreground }]}>
+          {restaurant.name}
+        </Text>
         <View style={styles.restaurantMeta}>
-          <Feather name="star" size={14} color={colors.brandGreen} />
-          <Text style={styles.rating}>{restaurant.rating}</Text>
-          <Text style={styles.metaDot}>·</Text>
+          <Feather name="star" size={12} color={colors.brandYellow} />
+          <Text style={[styles.rating, { color: colors.foreground }]}>{restaurant.rating}</Text>
+          <Feather name="clock" size={12} color={colors.brandMutedGreen} />
           <Text numberOfLines={1} style={styles.deliveryTime}>
             {restaurant.delivery}
+          </Text>
+        </View>
+        <View style={styles.deliveryMeta}>
+          <MaterialCommunityIcons
+            name="moped"
+            size={14}
+            color={restaurant.freeDelivery ? colors.brandGreen : colors.brandMutedGreen}
+          />
+          <Text style={[styles.deliveryLabel, { color: colors.mutedForeground }]}>
+            {restaurant.freeDelivery ? 'Grátis' : 'R$ --'}
           </Text>
         </View>
       </View>
@@ -308,6 +327,7 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [search, setSearch] = useState('');
+  const [favoriteNames, setFavoriteNames] = useState<string[]>([]);
   const [deliveryAddress, setDeliveryAddressState] = useState(
     getDeliveryAddress,
   );
@@ -330,6 +350,26 @@ export default function HomeScreen() {
   }, [search]);
 
   const topInset = Platform.OS === 'web' ? 67 : Platform.OS === 'android' ? 0 : insets.top;
+  const featuredRestaurants = visibleRestaurants.slice(0, 3);
+
+  const toggleFavorite = (name: string) => {
+    setFavoriteNames((current) =>
+      current.includes(name)
+        ? current.filter((favorite) => favorite !== name)
+        : [...current, name],
+    );
+  };
+
+  const openRestaurant = (restaurant: Restaurant) =>
+    router.push({
+      pathname: '/store',
+      params: {
+        name: restaurant.name,
+        cuisine: restaurant.cuisine,
+        rating: restaurant.rating,
+        delivery: restaurant.delivery,
+      },
+    });
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.card }]}>
@@ -419,12 +459,7 @@ export default function HomeScreen() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Oferta especial de hambúrguer artesanal"
-            onPress={() =>
-              Alert.alert(
-                'Oferta especial',
-                'Peça seu hambúrguer favorito e aproveite as ofertas de hoje.',
-              )
-            }
+            onPress={() => restaurants[0] && openRestaurant(restaurants[0])}
             style={({ pressed }) => [
               styles.heroBanner,
               { opacity: pressed ? 0.92 : 1 },
@@ -467,46 +502,49 @@ export default function HomeScreen() {
             </View>
           </Pressable>
 
-          <View style={styles.featuredSection}>
-            <View style={styles.sectionHeading}>
-              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
-                Lojas
-              </Text>
-              <Pressable
-                accessibilityRole="button"
-                onPress={() =>
-                  router.push({
-                    pathname: '/category',
-                    params: { category: 'Restaurantes' },
-                  })
-                }
-                style={styles.seeAllButton}
-              >
-                <Text style={[styles.seeAllText, { color: colors.brandMutedGreen }]}>
-                  Ver todos
+          {(['Perto de você', 'Lojas'] as const).map((title) => (
+            <View key={title} style={styles.featuredSection}>
+              <View style={styles.sectionHeading}>
+                <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
+                  {title}
                 </Text>
-                <Feather name="chevron-right" size={18} color={colors.brandMutedGreen} />
-              </Pressable>
-            </View>
-            {visibleRestaurants.length > 0 ? (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.restaurantList}
-              >
-                {visibleRestaurants.map((restaurant) => (
-                  <RestaurantCard key={restaurant.name} restaurant={restaurant} />
-                ))}
-              </ScrollView>
-            ) : (
-              <View style={[styles.noResults, { backgroundColor: colors.card }]}>
-                <Feather name="search" size={22} color={colors.brandMutedGreen} />
-                <Text style={[styles.noResultsText, { color: colors.brandMutedGreen }]}>
-                  Nenhum restaurante encontrado.
-                </Text>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() =>
+                    router.push({
+                      pathname: '/category',
+                      params: { category: 'Restaurantes' },
+                    })
+                  }
+                  style={styles.seeAllButton}
+                >
+                  <Text style={[styles.seeAllText, { color: colors.brandGreen }]}>
+                    Ver tudo
+                  </Text>
+                  <Feather name="arrow-right" size={16} color={colors.brandGreen} />
+                </Pressable>
               </View>
-            )}
-          </View>
+              {featuredRestaurants.length > 0 ? (
+                <View style={styles.restaurantGrid}>
+                  {featuredRestaurants.map((restaurant) => (
+                    <RestaurantCard
+                      key={`${title}-${restaurant.name}`}
+                      restaurant={restaurant}
+                      favorite={favoriteNames.includes(restaurant.name)}
+                      onToggleFavorite={() => toggleFavorite(restaurant.name)}
+                    />
+                  ))}
+                </View>
+              ) : (
+                <View style={[styles.noResults, { backgroundColor: colors.card }]}>
+                  <Feather name="search" size={22} color={colors.brandMutedGreen} />
+                  <Text style={[styles.noResultsText, { color: colors.brandMutedGreen }]}>
+                    Nenhuma loja encontrada.
+                  </Text>
+                </View>
+              )}
+            </View>
+          ))}
         </View>
       </ScrollView>
     </View>
@@ -515,7 +553,7 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  scrollContent: { flexGrow: 1, paddingBottom: 20 },
+  scrollContent: { flexGrow: 1, paddingBottom: 108 },
   header: { paddingHorizontal: 20, paddingBottom: 13 },
   topBar: {
     minHeight: 56,
@@ -571,7 +609,7 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     paddingBottom: 15,
   },
-  categoryItem: { alignItems: 'center', flex: 1, gap: 5 },
+  categoryItem: { alignItems: 'center', flex: 1, gap: 5, minWidth: 0 },
   categoryIcon: {
     width: '100%',
     height: 55,
@@ -652,26 +690,30 @@ const styles = StyleSheet.create({
   },
   heroPageDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#ffffff99' },
   heroPageDotActive: { backgroundColor: '#53d78d', width: 9, height: 9 },
-  featuredSection: { marginHorizontal: 1 },
+  featuredSection: { marginHorizontal: 1, marginBottom: 22 },
   sectionHeading: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
     gap: 8,
   },
   sectionTitle: { fontSize: 20, fontWeight: '800', letterSpacing: -0.5, flexShrink: 1 },
   seeAllButton: { flexDirection: 'row', alignItems: 'center' },
-  seeAllText: { fontSize: 13, fontWeight: '500' },
-  restaurantList: { gap: 9, paddingRight: 16, paddingBottom: 4 },
+  seeAllText: { fontSize: 12, fontWeight: '600' },
+  restaurantGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
   restaurantCard: {
-    width: 170,
+    width: '31.8%',
     overflow: 'hidden',
-    borderRadius: 16,
+    borderRadius: 11,
     borderWidth: 1,
     backgroundColor: '#ffffff',
   },
-  restaurantImage: { width: '100%', height: 90, overflow: 'hidden' },
+  restaurantImage: { width: '100%', height: 82, overflow: 'hidden', position: 'relative' },
   restaurantPhoto: { width: '100%', height: '100%' },
   subwayArtwork: {
     flex: 1,
@@ -687,13 +729,24 @@ const styles = StyleSheet.create({
     letterSpacing: -1.5,
   },
   subwayYellow: { color: '#f7c900' },
-  restaurantInfo: { paddingHorizontal: 11, paddingVertical: 8, gap: 5 },
-  restaurantNameRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  restaurantName: { color: '#163b28', fontSize: 13, fontWeight: '700', flexShrink: 1 },
-  restaurantMeta: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  rating: { color: '#163b28', fontSize: 12, fontWeight: '700' },
-  metaDot: { color: '#89978f', fontSize: 12 },
-  deliveryTime: { color: '#718379', fontSize: 12, flexShrink: 1 },
+  favoriteButton: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    width: 25,
+    height: 25,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.22)',
+  },
+  restaurantInfo: { paddingHorizontal: 7, paddingVertical: 6, gap: 4 },
+  restaurantName: { fontSize: 11, fontWeight: '700', flexShrink: 1 },
+  restaurantMeta: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  rating: { fontSize: 10, fontWeight: '700', marginRight: 2 },
+  deliveryTime: { color: '#718379', fontSize: 9, flexShrink: 1 },
+  deliveryMeta: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  deliveryLabel: { fontSize: 9 },
   noResults: {
     minHeight: 110,
     borderRadius: 18,
