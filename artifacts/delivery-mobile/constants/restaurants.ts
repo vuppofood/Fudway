@@ -5,6 +5,7 @@ export type Restaurant = {
   delivery: string;
   category: string;
   image?: number;
+  storeImage?: number;
   logo?: string;
   verified?: boolean;
   openNow: boolean;
@@ -15,52 +16,43 @@ export type Restaurant = {
 
 export const restaurants: Restaurant[] = [
   {
-    name: 'Subway',
-    cuisine: 'Sanduíches',
-    rating: '4.8',
-    delivery: '25–40 min',
+    name: 'Psiu Fast Delivery',
+    cuisine: 'Hambúrgueres',
+    rating: '4.3',
+    delivery: '70–80 min',
     category: 'Sanduíches',
-    logo: 'SUBWAY',
+    image: require('../assets/images/reference/nearby-piu.jpg'),
+    storeImage: require('../assets/images/reference/storefront-piu.jpg'),
     verified: true,
     openNow: true,
     nearby: true,
-    promotion: true,
+    promotion: false,
+    freeDelivery: true,
+  },
+  {
+    name: 'La Petit Pizzaria',
+    cuisine: 'Pizzas',
+    rating: '5.0',
+    delivery: '90–100 min',
+    category: 'Restaurantes',
+    image: require('../assets/images/reference/nearby-pizza.jpg'),
+    storeImage: require('../assets/images/reference/storefront-lapetit.jpg'),
+    openNow: true,
+    nearby: true,
+    promotion: false,
     freeDelivery: false,
   },
   {
-    name: 'Subway King',
+    name: 'Jack’s Burger',
     cuisine: 'Hambúrgueres',
-    rating: '4.6',
-    delivery: '30–50 min',
+    rating: '4.8',
+    delivery: '90–100 min',
     category: 'Sanduíches',
-    image: require('../assets/images/restaurant-burger.jpg'),
-    openNow: true,
-    nearby: false,
-    promotion: false,
-    freeDelivery: true,
-  },
-  {
-    name: 'Bebidas & Cia',
-    cuisine: 'Bebidas e bowls',
-    rating: '4.7',
-    delivery: '20–35 min',
-    category: 'Bebidas',
-    image: require('../assets/images/restaurant-bowl.jpg'),
+    image: require('../assets/images/reference/nearby-jacks.jpg'),
+    storeImage: require('../assets/images/reference/storefront-jacks.jpg'),
     openNow: true,
     nearby: true,
     promotion: false,
-    freeDelivery: true,
-  },
-  {
-    name: 'Combo da Casa',
-    cuisine: 'Combos especiais',
-    rating: '4.9',
-    delivery: '25–40 min',
-    category: 'Combos',
-    image: require('../assets/images/restaurant-burger.jpg'),
-    openNow: false,
-    nearby: true,
-    promotion: true,
-    freeDelivery: true,
+    freeDelivery: false,
   },
 ];

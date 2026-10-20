@@ -31,22 +31,32 @@ const categories: Category[] = [
     name: 'Lanches',
     label: 'Hambúrguer',
     route: 'Lanches',
-    image: require('../../assets/images/restaurant-burger.jpg'),
+    image: require('../../assets/images/reference/category-burger.jpg'),
   },
-  { name: 'Restaurantes', label: 'Pizza', route: 'Restaurantes' },
+  {
+    name: 'Restaurantes',
+    label: 'Pizza',
+    route: 'Restaurantes',
+    image: require('../../assets/images/reference/category-pizza.jpg'),
+  },
   {
     name: 'Padaria',
     label: 'Porções',
     route: 'Lanches',
-    image: require('../../assets/images/cart-potatoes.png'),
+    image: require('../../assets/images/reference/category-fries.jpg'),
   },
   {
     name: 'Bebidas',
     label: 'Bebidas',
     route: 'Bebidas',
-    image: require('../../assets/images/cart-drink.png'),
+    image: require('../../assets/images/reference/category-drink.jpg'),
   },
-  { name: 'Doces e bolos', label: 'Sobremesas', route: 'Doces e bolos' },
+  {
+    name: 'Doces e bolos',
+    label: 'Sobremesas',
+    route: 'Doces e bolos',
+    image: require('../../assets/images/reference/category-dessert.jpg'),
+  },
 ];
 
 function CategoryButton({
@@ -244,63 +254,79 @@ function CategoryArtwork({
 
 function RestaurantCard({
   restaurant,
+  displayImage,
   favorite,
   onToggleFavorite,
 }: {
   restaurant: Restaurant;
+  displayImage?: number;
   favorite: boolean;
   onToggleFavorite: () => void;
 }) {
   const colors = useColors();
   const router = useRouter();
+  const openStore = () =>
+    router.push({
+      pathname: '/store',
+      params: {
+        name: restaurant.name,
+        cuisine: restaurant.cuisine,
+        rating: restaurant.rating,
+        delivery: restaurant.delivery,
+        freeDelivery: restaurant.freeDelivery ? 'true' : 'false',
+      },
+    });
 
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`Abrir ${restaurant.name}`}
-      onPress={() =>
-        router.push({
-          pathname: '/store',
-          params: {
-            name: restaurant.name,
-            cuisine: restaurant.cuisine,
-            rating: restaurant.rating,
-            delivery: restaurant.delivery,
-          },
-        })
-      }
-      style={({ pressed }) => [styles.restaurantCard, { borderColor: colors.border, opacity: pressed ? 0.9 : 1 }]}
-    >
+    <View style={[styles.restaurantCard, { borderColor: colors.border }]}>
       <View style={styles.restaurantImage}>
-        {restaurant.image ? (
-          <Image source={restaurant.image} style={styles.restaurantPhoto} resizeMode="cover" />
+        {displayImage ?? restaurant.image ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Abrir ${restaurant.name}`}
+            onPress={openStore}
+            style={StyleSheet.absoluteFill}
+          >
+            <Image
+              source={displayImage ?? restaurant.image}
+              style={styles.restaurantPhoto}
+              resizeMode="cover"
+            />
+          </Pressable>
         ) : (
-          <View style={styles.subwayArtwork}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Abrir ${restaurant.name}`}
+            onPress={openStore}
+            style={styles.subwayArtwork}
+          >
             <Text style={styles.subwayWordmark}>
               SUB<Text style={styles.subwayYellow}>WAY</Text>
             </Text>
-          </View>
+          </Pressable>
         )}
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={favorite ? `Remover ${restaurant.name} dos favoritos` : `Favoritar ${restaurant.name}`}
           accessibilityState={{ selected: favorite }}
-          onPress={(event) => {
-            event.stopPropagation();
-            onToggleFavorite();
-          }}
+          onPress={onToggleFavorite}
           hitSlop={8}
           style={styles.favoriteButton}
         >
           <Feather name="heart" size={17} color={favorite ? '#ed2635' : '#ffffff'} />
         </Pressable>
       </View>
-      <View style={styles.restaurantInfo}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Abrir ${restaurant.name}`}
+        onPress={openStore}
+        style={styles.restaurantInfo}
+      >
         <Text numberOfLines={1} style={[styles.restaurantName, { color: colors.foreground }]}>
           {restaurant.name}
         </Text>
         <View style={styles.restaurantMeta}>
-          <Feather name="star" size={12} color={colors.brandYellow} />
+          <MaterialCommunityIcons name="star" size={12} color={colors.brandYellow} />
           <Text style={[styles.rating, { color: colors.foreground }]}>{restaurant.rating}</Text>
           <Feather name="clock" size={12} color={colors.brandMutedGreen} />
           <Text numberOfLines={1} style={styles.deliveryTime}>
@@ -317,8 +343,8 @@ function RestaurantCard({
             {restaurant.freeDelivery ? 'Grátis' : 'R$ --'}
           </Text>
         </View>
-      </View>
-    </Pressable>
+      </Pressable>
+    </View>
   );
 }
 
@@ -349,7 +375,7 @@ export default function HomeScreen() {
     );
   }, [search]);
 
-  const topInset = Platform.OS === 'web' ? 67 : Platform.OS === 'android' ? 0 : insets.top;
+  const topInset = Platform.OS === 'web' ? 40 : insets.top;
   const featuredRestaurants = visibleRestaurants.slice(0, 3);
 
   const toggleFavorite = (name: string) => {
@@ -368,6 +394,7 @@ export default function HomeScreen() {
         cuisine: restaurant.cuisine,
         rating: restaurant.rating,
         delivery: restaurant.delivery,
+        freeDelivery: restaurant.freeDelivery ? 'true' : 'false',
       },
     });
 
@@ -383,7 +410,7 @@ export default function HomeScreen() {
             styles.header,
             {
               backgroundColor: '#ffffff',
-              paddingTop: topInset + (Platform.OS === 'android' ? 24 : 6),
+              paddingTop: topInset,
             },
           ]}
         >
@@ -530,6 +557,11 @@ export default function HomeScreen() {
                     <RestaurantCard
                       key={`${title}-${restaurant.name}`}
                       restaurant={restaurant}
+                      displayImage={
+                        title === 'Lojas'
+                          ? restaurant.storeImage ?? restaurant.image
+                          : restaurant.image
+                      }
                       favorite={favoriteNames.includes(restaurant.name)}
                       onToggleFavorite={() => toggleFavorite(restaurant.name)}
                     />
@@ -554,13 +586,13 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   scrollContent: { flexGrow: 1, paddingBottom: 108 },
-  header: { paddingHorizontal: 20, paddingBottom: 13 },
+  header: { paddingHorizontal: 13, paddingBottom: 8 },
   topBar: {
-    minHeight: 56,
+    minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 17,
+    marginBottom: 12,
   },
   addressButton: {
     flex: 1,
@@ -574,12 +606,12 @@ const styles = StyleSheet.create({
   addressTitle: { color: '#171c20', fontSize: 16, fontWeight: '700' },
   headerActionButton: {
     position: 'relative',
-    width: 51,
-    height: 51,
+    width: 44,
+    height: 44,
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 14,
+    marginLeft: 10,
   },
   notificationDot: {
     position: 'absolute',
@@ -593,26 +625,26 @@ const styles = StyleSheet.create({
     borderColor: '#ffffff',
   },
   searchBar: {
-    minHeight: 52,
+    minHeight: 44,
     borderRadius: 18,
     paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
+    gap: 12,
     backgroundColor: '#f1f3f5',
   },
-  searchInput: { flex: 1, color: '#20262a', fontSize: 14, paddingVertical: 9 },
+  searchInput: { flex: 1, color: '#20262a', fontSize: 13, paddingVertical: 7 },
   content: { paddingHorizontal: 13, paddingTop: 0, paddingBottom: 100 },
   categoriesRow: {
     flexDirection: 'row',
     gap: 8,
-    paddingTop: 10,
-    paddingBottom: 15,
+    paddingTop: 12,
+    paddingBottom: 16,
   },
   categoryItem: { alignItems: 'center', flex: 1, gap: 5, minWidth: 0 },
   categoryIcon: {
     width: '100%',
-    height: 55,
+    height: 62,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
@@ -622,14 +654,14 @@ const styles = StyleSheet.create({
     borderColor: '#edf0f2',
   },
   categoryIconSelected: { borderColor: '#54d69a', borderWidth: 1.5, backgroundColor: '#e8f8ef' },
-  categoryImage: { width: '88%', height: '88%', borderRadius: 10 },
-  categoryLabel: { fontSize: 10, fontWeight: '600', textAlign: 'center' },
+  categoryImage: { width: '100%', height: '100%', borderRadius: 10 },
+  categoryLabel: { fontSize: 11, fontWeight: '600', textAlign: 'center' },
   heroBanner: {
     height: 184,
     overflow: 'hidden',
     borderRadius: 18,
     backgroundColor: '#172216',
-    marginBottom: 22,
+    marginBottom: 19,
   },
   heroImage: {
     ...StyleSheet.absoluteFill,
@@ -690,7 +722,7 @@ const styles = StyleSheet.create({
   },
   heroPageDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#ffffff99' },
   heroPageDotActive: { backgroundColor: '#53d78d', width: 9, height: 9 },
-  featuredSection: { marginHorizontal: 1, marginBottom: 22 },
+  featuredSection: { marginHorizontal: 1, marginBottom: 23 },
   sectionHeading: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -713,7 +745,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     backgroundColor: '#ffffff',
   },
-  restaurantImage: { width: '100%', height: 82, overflow: 'hidden', position: 'relative' },
+  restaurantImage: { width: '100%', height: 84, overflow: 'hidden', position: 'relative' },
   restaurantPhoto: { width: '100%', height: '100%' },
   subwayArtwork: {
     flex: 1,

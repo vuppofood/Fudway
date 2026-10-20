@@ -1,0 +1,1 @@
+- [Replit package firewall](pnpm-firewall.md) — Fresh installs blocked `proxy-addr@2.0.7`; keep the workspace override to `2.0.8`.

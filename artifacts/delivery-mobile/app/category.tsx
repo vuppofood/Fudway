@@ -56,6 +56,7 @@ function StoreListCard({ restaurant }: { restaurant: Restaurant }) {
         cuisine: restaurant.cuisine,
         rating: restaurant.rating,
         delivery: restaurant.delivery,
+        freeDelivery: restaurant.freeDelivery ? 'true' : 'false',
       },
     });
 

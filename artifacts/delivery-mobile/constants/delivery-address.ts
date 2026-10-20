@@ -1,4 +1,4 @@
-let currentDeliveryAddress = 'Rua das Palmeiras, 258';
+let currentDeliveryAddress = 'Rua das Palmeiras, 123';
 
 export function getDeliveryAddress() {
   return currentDeliveryAddress;

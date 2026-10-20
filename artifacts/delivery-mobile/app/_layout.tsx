@@ -1,10 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Image, View } from 'react-native';
+import React, { useEffect } from 'react';
+import { View } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { Feather } from '@expo/vector-icons';
 import colors from '@/constants/colors';
 import { StatusBar } from 'expo-status-bar';
 import {
@@ -21,8 +22,6 @@ import * as SplashScreen from 'expo-splash-screen';
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
-const MIN_SPLASH_DURATION_MS = 1000;
-const SPLASH_LOGO_ASPECT_RATIO = 1247 / 201;
 
 function RootLayoutNav() {
   const pathname = usePathname();
@@ -37,12 +36,13 @@ function RootLayoutNav() {
     pathname.endsWith('/index') ||
     pathname.endsWith('/(tabs)');
   const isProfileScreen = pathname.endsWith('/profile');
+  const isStoreScreen = pathname.endsWith('/store');
 
   return (
     <>
       <StatusBar
-        hidden={!(isAuthenticationScreen || isHomeScreen || isProfileScreen)}
-        style={isProfileScreen ? 'light' : 'dark'}
+        hidden={!(isAuthenticationScreen || isHomeScreen || isProfileScreen || isStoreScreen)}
+        style={isProfileScreen || isStoreScreen ? 'light' : 'dark'}
       />
       <Stack
         initialRouteName="index"
@@ -67,14 +67,13 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
-  const [fontsLoaded, fontError] = useFonts({
+  useFonts({
+    ...Feather.font,
     Inter_400Regular,
     Inter_500Medium,
     Inter_600SemiBold,
     Inter_700Bold,
   });
-  const [appReady, setAppReady] = useState(false);
-  const splashStartedAt = useRef(Date.now());
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
@@ -83,40 +82,6 @@ export default function RootLayout() {
 
     return () => cancelAnimationFrame(frame);
   }, []);
-
-  useEffect(() => {
-    if (!fontsLoaded && !fontError) return;
-
-    const remainingDuration = Math.max(
-      0,
-      MIN_SPLASH_DURATION_MS - (Date.now() - splashStartedAt.current),
-    );
-    const timeout = setTimeout(() => setAppReady(true), remainingDuration);
-    return () => clearTimeout(timeout);
-  }, [fontsLoaded, fontError]);
-
-  if (!appReady) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: '#05462B',
-        }}
-      >
-        <Image
-          source={require('@/assets/images/fudway_logo_white_transparent.png')}
-          resizeMode="contain"
-          style={{
-            width: '56%',
-            maxWidth: 280,
-            aspectRatio: SPLASH_LOGO_ASPECT_RATIO,
-          }}
-        />
-      </View>
-    );
-  }
 
   return (
     <SafeAreaProvider>
