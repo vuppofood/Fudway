@@ -1,8 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { Feather } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { useRouter } from 'expo-router';
 import {
-  Alert,
   Image,
   Platform,
   Pressable,
@@ -13,35 +12,8 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useCart } from '@/contexts/CartContext';
 import { useColors } from '@/hooks/useColors';
-
-type CartItem = {
-  id: string;
-  name: string;
-  price: number;
-  image: number;
-};
-
-const initialItems: CartItem[] = [
-  {
-    id: 'subway-classico',
-    name: 'Subway Clássico',
-    price: 24.9,
-    image: require('../assets/images/cart-sandwich.png'),
-  },
-  {
-    id: 'batata-rustica',
-    name: 'Batata Rústica',
-    price: 12.9,
-    image: require('../assets/images/cart-potatoes.png'),
-  },
-  {
-    id: 'refrigerante',
-    name: 'Refrigerante 350ml',
-    price: 6.9,
-    image: require('../assets/images/cart-drink.png'),
-  },
-];
 
 const formatPrice = (value: number) =>
   value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -49,252 +21,246 @@ const formatPrice = (value: number) =>
 export default function CartScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const topInset = Platform.OS === 'web' ? 67 : Platform.OS === 'android' ? 0 : insets.top;
-  const [items, setItems] = useState<CartItem[]>(initialItems);
-  const [quantities, setQuantities] = useState<Record<string, number>>({
-    'subway-classico': 1,
-    'batata-rustica': 1,
-    refrigerante: 1,
-  });
+  const router = useRouter();
+  const {
+    items,
+    subtotal,
+    discount,
+    couponCode,
+    applyCoupon: applyCouponCode,
+    setQuantity,
+    removeItem,
+  } = useCart();
   const [couponText, setCouponText] = useState('');
-  const [couponApplied, setCouponApplied] = useState(false);
-
-  const subtotal = useMemo(
-    () =>
-      items.reduce(
-        (sum, item) => sum + item.price * (quantities[item.id] ?? 1),
-        0,
-      ),
-    [items, quantities],
-  );
-  const deliveryFee = items.length > 0 ? 6.9 : 0;
-  const discount = couponApplied ? subtotal * 0.1 : 0;
-  const total = subtotal - discount + deliveryFee;
-
-  const changeQuantity = (id: string, amount: number) => {
-    setQuantities((current) => ({
-      ...current,
-      [id]: Math.max(1, (current[id] ?? 1) + amount),
-    }));
-  };
-
-  const removeItem = (id: string) => {
-    setItems((current) => current.filter((item) => item.id !== id));
-  };
+  const [couponMessage, setCouponMessage] = useState('');
+  const couponApplied = Boolean(couponCode);
+  const total = subtotal - discount;
+  const storeName = items[0]?.storeName || 'Buncker';
+  const storeCuisine = items[0]?.cuisine || 'Hambúrgueres';
 
   const applyCoupon = () => {
-    if (couponText.trim().toUpperCase() === 'LANCHE10') {
-      setCouponApplied(true);
-      Alert.alert('Cupom aplicado', 'Você ganhou 10% de desconto nos produtos.');
+    if (applyCouponCode(couponText)) {
+      setCouponMessage('Cupom LANCHE10 aplicado.');
       return;
     }
-    setCouponApplied(false);
-    Alert.alert('Cupom inválido', 'Confira o código e tente novamente.');
-  };
-
-  const finishOrder = () => {
-    if (items.length === 0) {
-      Alert.alert('Carrinho vazio', 'Adicione produtos antes de finalizar.');
-      return;
-    }
-    Alert.alert(
-      'Pedido de demonstração',
-      'A tela está pronta, mas este protótipo ainda não processa pagamentos.',
-    );
+    setCouponMessage('Cupom não encontrado. Confira o código e tente novamente.');
   };
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.card }]}>
+      <View
+        style={[
+          styles.header,
+          {
+            paddingTop: Math.max(insets.top, Platform.OS === 'web' ? 30 : 6),
+            backgroundColor: colors.card,
+          },
+        ]}
+      >
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Voltar à loja"
+          onPress={() => router.back()}
+          style={styles.headerButton}
+        >
+          <Feather name="chevron-left" size={27} color={colors.foreground} />
+        </Pressable>
+        <View style={styles.headerCopy}>
+          <Text style={[styles.headerTitle, { color: colors.foreground }]}>Sacola</Text>
+          <Text style={[styles.headerSubtitle, { color: colors.mutedForeground }]}>
+            {storeName} · {storeCuisine}
+          </Text>
+        </View>
+        <View style={styles.headerButton} />
+      </View>
+
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.page}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: Math.max(insets.bottom, 12) + 96 },
+        ]}
       >
-        <View
-          style={[
-            styles.header,
-            { paddingTop: topInset + 3, backgroundColor: colors.brandDeepGreen },
-          ]}
+        <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Seus itens</Text>
+
+        {items.length ? (
+          <View style={styles.itemsList}>
+            {items.map((item) => (
+              <View
+                key={item.cartKey}
+                style={[
+                  styles.cartItem,
+                  { backgroundColor: colors.card, borderColor: colors.border },
+                ]}
+              >
+                <Image source={item.image} style={styles.productImage} resizeMode="cover" />
+                <View style={styles.productInfo}>
+                  <Text
+                    numberOfLines={1}
+                    style={[styles.productName, { color: colors.foreground }]}
+                  >
+                    {item.name}
+                  </Text>
+                  <Text
+                    numberOfLines={2}
+                    style={[styles.productDescription, { color: colors.mutedForeground }]}
+                  >
+                    {item.notes?.trim() || item.customization || item.description}
+                  </Text>
+                  <Text style={[styles.productPrice, { color: colors.foreground }]}>
+                    {formatPrice(item.price * item.quantity)}
+                  </Text>
+                </View>
+                <View style={styles.itemActions}>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`Remover ${item.name}`}
+                    onPress={() => removeItem(item.cartKey)}
+                    style={styles.removeButton}
+                  >
+                    <Feather name="trash-2" size={16} color={colors.mutedForeground} />
+                  </Pressable>
+                  <View style={[styles.quantityControl, { borderColor: colors.border }]}>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={`Diminuir ${item.name}`}
+                      onPress={() => setQuantity(item.cartKey, item.quantity - 1)}
+                      style={styles.quantityButton}
+                    >
+                      <Feather name="minus" size={14} color={colors.foreground} />
+                    </Pressable>
+                    <Text style={[styles.quantity, { color: colors.foreground }]}>
+                      {item.quantity}
+                    </Text>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={`Aumentar ${item.name}`}
+                      onPress={() => setQuantity(item.cartKey, item.quantity + 1)}
+                      style={[styles.plusButton, { backgroundColor: colors.brandTomato }]}
+                    >
+                      <Feather name="plus" size={14} color="#ffffff" />
+                    </Pressable>
+                  </View>
+                </View>
+              </View>
+            ))}
+          </View>
+        ) : (
+          <View style={[styles.emptyCard, { borderColor: colors.border }]}>
+            <Feather name="shopping-bag" size={34} color={colors.brandGreen} />
+            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>
+              Sua sacola está vazia
+            </Text>
+          </View>
+        )}
+
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.push('/store')}
+          style={styles.addMore}
         >
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Voltar"
-            onPress={() => router.back()}
-            hitSlop={10}
-            style={styles.headerAction}
-          >
-            <Feather name="arrow-left" size={22} color="#ffffff" />
-          </Pressable>
-          <Text style={styles.headerTitle}>Meu carrinho</Text>
-          <View style={styles.headerAction} />
+          <Feather name="plus" size={22} color={colors.brandTomato} />
+          <Text style={[styles.addMoreText, { color: colors.brandTomato }]}>
+            Adicionar mais itens
+          </Text>
+        </Pressable>
+
+        <View style={[styles.couponSection, { borderTopColor: colors.border }]}>
+          <View style={styles.sectionHeading}>
+            <Feather name="tag" size={20} color={colors.foreground} />
+            <Text style={[styles.couponTitle, { color: colors.foreground }]}>
+              Cupom de desconto
+            </Text>
+          </View>
+          <View style={styles.couponControls}>
+            <TextInput
+              accessibilityLabel="Código do cupom"
+              autoCapitalize="characters"
+              onChangeText={(value) => {
+                setCouponText(value);
+                setCouponMessage('');
+              }}
+              placeholder="Digite seu cupom"
+              placeholderTextColor={colors.mutedForeground}
+              value={couponText}
+              style={[
+                styles.couponInput,
+                { borderColor: colors.border, color: colors.foreground },
+              ]}
+            />
+            <Pressable
+              accessibilityRole="button"
+              onPress={applyCoupon}
+              style={({ pressed }) => [
+                styles.applyButton,
+                { backgroundColor: colors.brandTomato, opacity: pressed ? 0.82 : 1 },
+              ]}
+            >
+              <Text style={styles.applyText}>Adicionar</Text>
+            </Pressable>
+          </View>
+          {couponMessage ? (
+            <Text
+              style={[
+                styles.couponMessage,
+                { color: couponApplied ? colors.brandGreen : colors.brandTomato },
+              ]}
+            >
+              {couponMessage}
+            </Text>
+          ) : null}
         </View>
 
-        <View
-          style={[
-            styles.panel,
-            { backgroundColor: colors.card, borderColor: colors.border },
-          ]}
-        >
-          {items.length > 0 ? (
-            <>
-              <View style={styles.itemList}>
-                {items.map((item, index) => (
-                  <View
-                    key={item.id}
-                    style={[
-                      styles.cartItem,
-                      index < items.length - 1 && {
-                        borderBottomColor: colors.border,
-                        borderBottomWidth: StyleSheet.hairlineWidth,
-                      },
-                    ]}
-                  >
-                    <Image source={item.image} style={styles.productImage} />
-                    <View style={styles.productInfo}>
-                      <Text
-                        numberOfLines={1}
-                        style={[styles.productName, { color: colors.foreground }]}
-                      >
-                        {item.name}
-                      </Text>
-                      <Text style={[styles.productPrice, { color: colors.foreground }]}>
-                        {formatPrice(item.price)}
-                      </Text>
-                      <View
-                        style={[
-                          styles.quantityControl,
-                          { borderColor: colors.border },
-                        ]}
-                      >
-                        <Pressable
-                          accessibilityRole="button"
-                          accessibilityLabel={`Diminuir ${item.name}`}
-                          onPress={() => changeQuantity(item.id, -1)}
-                          style={styles.quantityButton}
-                        >
-                          <Feather name="minus" size={13} color={colors.brandGreen} />
-                        </Pressable>
-                        <Text style={[styles.quantity, { color: colors.foreground }]}>
-                          {quantities[item.id] ?? 1}
-                        </Text>
-                        <Pressable
-                          accessibilityRole="button"
-                          accessibilityLabel={`Aumentar ${item.name}`}
-                          onPress={() => changeQuantity(item.id, 1)}
-                          style={styles.quantityButton}
-                        >
-                          <Feather name="plus" size={13} color={colors.brandGreen} />
-                        </Pressable>
-                      </View>
-                    </View>
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={`Remover ${item.name}`}
-                      onPress={() => removeItem(item.id)}
-                      hitSlop={8}
-                      style={styles.removeButton}
-                    >
-                      <Feather name="trash-2" size={17} color={colors.brandGreen} />
-                    </Pressable>
-                  </View>
-                ))}
-              </View>
-
-              <View style={styles.checkoutArea}>
-                <View style={styles.couponSection}>
-                  <View style={styles.couponLabelRow}>
-                    <Feather name="tag" size={14} color={colors.brandYellow} />
-                    <Text style={[styles.couponTitle, { color: colors.foreground }]}>
-                      Cupom de desconto
-                    </Text>
-                    {couponApplied ? (
-                      <Text style={[styles.couponApplied, { color: colors.brandGreen }]}>
-                        LANCHE10 aplicado
-                      </Text>
-                    ) : null}
-                  </View>
-                  <View style={styles.couponControls}>
-                    <TextInput
-                      accessibilityLabel="Código de desconto"
-                      autoCapitalize="characters"
-                      onChangeText={setCouponText}
-                      placeholder="Digite o código"
-                      placeholderTextColor={colors.mutedForeground}
-                      value={couponText}
-                      style={[
-                        styles.couponInput,
-                        { borderColor: colors.border, color: colors.foreground },
-                      ]}
-                    />
-                    <Pressable
-                      accessibilityRole="button"
-                      onPress={applyCoupon}
-                      style={({ pressed }) => [
-                        styles.applyButton,
-                        { backgroundColor: colors.brandMint, opacity: pressed ? 0.75 : 1 },
-                      ]}
-                    >
-                      <Text style={[styles.applyText, { color: colors.brandGreen }]}>
-                        Aplicar
-                      </Text>
-                    </Pressable>
-                  </View>
-                </View>
-
-                <View style={[styles.summary, { borderTopColor: colors.border }]}>
-                  <SummaryRow label="Subtotal" value={formatPrice(subtotal)} colors={colors} />
-                  <SummaryRow
-                    label="Taxa de entrega"
-                    value={formatPrice(deliveryFee)}
-                    colors={colors}
-                  />
-                  {couponApplied ? (
-                    <SummaryRow
-                      label="Desconto"
-                      value={`− ${formatPrice(discount)}`}
-                      colors={colors}
-                    />
-                  ) : null}
-                  <SummaryRow
-                    label="Total"
-                    value={formatPrice(total)}
-                    colors={colors}
-                    emphasized
-                  />
-                </View>
-
-                <Pressable
-                  accessibilityRole="button"
-                  onPress={finishOrder}
-                  style={({ pressed }) => [
-                    styles.checkoutButton,
-                    { backgroundColor: colors.brandYellow, opacity: pressed ? 0.84 : 1 },
-                  ]}
-                >
-                  <Text style={[styles.checkoutText, { color: colors.brandDeepGreen }]}>
-                    Finalizar pedido
-                  </Text>
-                </Pressable>
-              </View>
-            </>
-          ) : (
-            <View style={styles.emptyState}>
-              <Feather name="shopping-bag" size={38} color={colors.brandGreen} />
-              <Text style={[styles.emptyTitle, { color: colors.foreground }]}>
-                Seu carrinho está vazio
-              </Text>
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => router.back()}
-                style={[styles.backToStoreButton, { backgroundColor: colors.brandYellow }]}
-              >
-                <Text style={[styles.checkoutText, { color: colors.brandDeepGreen }]}>
-                  Voltar à loja
-                </Text>
-              </Pressable>
-            </View>
-          )}
+        <View style={[styles.summary, { borderTopColor: colors.border }]}>
+          <View style={styles.sectionHeading}>
+            <Feather name="file-text" size={19} color={colors.foreground} />
+            <Text style={[styles.couponTitle, { color: colors.foreground }]}>
+              Resumo de valores
+            </Text>
+          </View>
+          <SummaryRow label="Subtotal" value={formatPrice(subtotal)} colors={colors} />
+          <SummaryRow label="Taxa de entrega" value="Grátis" colors={colors} free />
+          <SummaryRow
+            label="Descontos"
+            value={discount ? `− ${formatPrice(discount)}` : formatPrice(0)}
+            colors={colors}
+          />
+          <View style={[styles.totalRow, { borderTopColor: colors.border }]}>
+            <Text style={[styles.totalLabel, { color: colors.foreground }]}>Total</Text>
+            <Text style={[styles.totalValue, { color: colors.foreground }]}>
+              {formatPrice(total)}
+            </Text>
+          </View>
         </View>
       </ScrollView>
+
+      {items.length > 0 ? (
+        <View
+          style={[
+            styles.bottomBar,
+            {
+              backgroundColor: colors.brandInk,
+              paddingBottom: Math.max(insets.bottom, Platform.OS === 'web' ? 11 : 8),
+            },
+          ]}
+        >
+          <View style={styles.bottomTotal}>
+            <Text style={styles.bottomLabel}>Total</Text>
+            <Text style={styles.bottomAmount}>{formatPrice(total)}</Text>
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => router.push('/checkout')}
+            style={({ pressed }) => [
+              styles.checkoutButton,
+              { backgroundColor: colors.brandTomato, opacity: pressed ? 0.84 : 1 },
+            ]}
+          >
+            <Text style={styles.checkoutText}>Continuar para entrega</Text>
+            <Feather name="arrow-right" size={17} color="#ffffff" />
+          </Pressable>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -303,29 +269,20 @@ function SummaryRow({
   label,
   value,
   colors,
-  emphasized = false,
+  free = false,
 }: {
   label: string;
   value: string;
   colors: ReturnType<typeof useColors>;
-  emphasized?: boolean;
+  free?: boolean;
 }) {
   return (
-    <View style={[styles.summaryRow, emphasized && styles.totalRow]}>
-      <Text
-        style={[
-          styles.summaryLabel,
-          { color: colors.foreground },
-          emphasized && styles.totalText,
-        ]}
-      >
-        {label}
-      </Text>
+    <View style={styles.summaryRow}>
+      <Text style={[styles.summaryLabel, { color: colors.mutedForeground }]}>{label}</Text>
       <Text
         style={[
           styles.summaryValue,
-          { color: colors.foreground },
-          emphasized && styles.totalText,
+          { color: free ? colors.brandGreen : colors.foreground },
         ]}
       >
         {value}
@@ -336,145 +293,148 @@ function SummaryRow({
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  page: { flexGrow: 1, paddingBottom: 8 },
   header: {
-    minHeight: 58,
-    paddingHorizontal: 17,
-    paddingBottom: 16,
+    minHeight: 90,
+    paddingHorizontal: 15,
+    paddingBottom: 6,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
   },
-  headerAction: {
-    width: 27,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    flex: 1,
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  panel: {
-    flex: 1,
-    marginHorizontal: 8,
-    paddingHorizontal: 12,
-    paddingTop: 10,
-    paddingBottom: 12,
-    borderWidth: 1,
-    borderTopLeftRadius: 19,
-    borderTopRightRadius: 19,
-    borderBottomLeftRadius: 19,
-    borderBottomRightRadius: 19,
-  },
-  itemList: { gap: 14 },
-  checkoutArea: { marginTop: 'auto' },
+  headerButton: { width: 35, alignItems: 'center', justifyContent: 'center' },
+  headerCopy: { flex: 1, alignItems: 'center' },
+  headerTitle: { fontSize: 20, fontWeight: '800' },
+  headerSubtitle: { marginTop: 2, fontSize: 12 },
+  content: { paddingHorizontal: 16, paddingTop: 5 },
+  sectionTitle: { fontSize: 18, fontWeight: '800', marginBottom: 12 },
+  itemsList: { gap: 10 },
   cartItem: {
-    minHeight: 126,
+    minHeight: 118,
+    padding: 9,
+    borderWidth: 1,
+    borderRadius: 13,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    paddingVertical: 10,
   },
-  productImage: {
-    width: 74,
-    height: 74,
-    borderRadius: 9,
-    backgroundColor: '#eaf2ed',
+  productImage: { width: 82, height: 82, borderRadius: 10 },
+  productInfo: { flex: 1, alignSelf: 'stretch', justifyContent: 'center', gap: 4 },
+  productName: { fontSize: 14, fontWeight: '700' },
+  productDescription: { fontSize: 11, lineHeight: 15 },
+  productPrice: { fontSize: 14, fontWeight: '800' },
+  itemActions: {
+    alignSelf: 'stretch',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    paddingVertical: 2,
   },
-  productInfo: { flex: 1, gap: 4 },
-  productName: { fontSize: 12, fontWeight: '600' },
-  productPrice: { fontSize: 13, fontWeight: '700' },
+  removeButton: { padding: 4 },
   quantityControl: {
-    alignSelf: 'flex-start',
-    minWidth: 77,
-    height: 25,
+    height: 30,
+    minWidth: 76,
     borderWidth: 1,
-    borderRadius: 9,
+    borderRadius: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingLeft: 5,
+    overflow: 'hidden',
   },
   quantityButton: {
-    width: 25,
-    height: 23,
+    width: 22,
+    height: 28,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  quantity: { minWidth: 15, fontSize: 11, fontWeight: '600', textAlign: 'center' },
-  removeButton: {
-    width: 24,
+  quantity: { fontSize: 12, fontWeight: '700' },
+  plusButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  couponSection: {
-    paddingTop: 12,
-    paddingBottom: 11,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#e4ece6',
-  },
-  couponLabelRow: {
+  addMore: {
+    minHeight: 49,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    marginBottom: 7,
+    gap: 8,
   },
-  couponTitle: { fontSize: 11, fontWeight: '600' },
-  couponApplied: { marginLeft: 'auto', fontSize: 10, fontWeight: '600' },
-  couponControls: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+  addMoreText: { fontSize: 13, fontWeight: '700' },
+  couponSection: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 15, paddingBottom: 15 },
+  sectionHeading: { flexDirection: 'row', alignItems: 'center', gap: 9, marginBottom: 10 },
+  couponTitle: { fontSize: 15, fontWeight: '700' },
+  couponControls: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   couponInput: {
     flex: 1,
-    height: 35,
+    height: 42,
     borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    fontSize: 11,
+    borderRadius: 11,
+    paddingHorizontal: 13,
+    fontSize: 12,
   },
   applyButton: {
-    width: 72,
-    height: 35,
-    borderRadius: 10,
+    minWidth: 92,
+    height: 42,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 12,
   },
-  applyText: { fontSize: 11, fontWeight: '600' },
-  summary: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    paddingTop: 8,
-    gap: 5,
-  },
+  applyText: { color: '#ffffff', fontSize: 12, fontWeight: '700' },
+  couponMessage: { marginTop: 7, fontSize: 11 },
+  summary: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 15, paddingBottom: 12 },
   summaryRow: {
-    minHeight: 18,
+    minHeight: 27,
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'center',
   },
-  summaryLabel: { fontSize: 11, fontWeight: '400' },
-  summaryValue: { fontSize: 11, fontWeight: '600' },
-  totalRow: { minHeight: 34, marginTop: 2 },
-  totalText: { fontSize: 16, fontWeight: '800' },
-  checkoutButton: {
-    minHeight: 47,
+  summaryLabel: { fontSize: 13 },
+  summaryValue: { fontSize: 13, fontWeight: '500' },
+  totalRow: {
+    minHeight: 43,
     marginTop: 8,
-    borderRadius: 10,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  totalLabel: { fontSize: 17, fontWeight: '800' },
+  totalValue: { fontSize: 19, fontWeight: '800' },
+  bottomBar: {
+    position: 'absolute',
+    left: 10,
+    right: 10,
+    bottom: 8,
+    minHeight: 73,
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  bottomTotal: { flex: 1 },
+  bottomLabel: { color: '#ffffff', fontSize: 11 },
+  bottomAmount: { color: '#ffffff', fontSize: 19, fontWeight: '800' },
+  checkoutButton: {
+    minHeight: 44,
+    maxWidth: '60%',
+    borderRadius: 25,
+    paddingHorizontal: 15,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 6,
   },
-  checkoutText: { fontSize: 12, fontWeight: '700' },
-  emptyState: {
-    flex: 1,
-    minHeight: 360,
+  checkoutText: { color: '#ffffff', fontSize: 12, fontWeight: '700' },
+  emptyCard: {
+    minHeight: 180,
+    borderWidth: 1,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 14,
+    gap: 12,
   },
-  emptyTitle: { fontSize: 16, fontWeight: '700' },
-  backToStoreButton: {
-    minHeight: 42,
-    paddingHorizontal: 18,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  emptyTitle: { fontSize: 15, fontWeight: '700' },
 });

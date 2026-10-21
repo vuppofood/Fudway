@@ -7,6 +7,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Feather } from '@expo/vector-icons';
 import colors from '@/constants/colors';
+import { CartProvider } from '@/contexts/CartContext';
 import { StatusBar } from 'expo-status-bar';
 import {
   Inter_400Regular,
@@ -37,12 +38,26 @@ function RootLayoutNav() {
     pathname.endsWith('/(tabs)');
   const isProfileScreen = pathname.endsWith('/profile');
   const isStoreScreen = pathname.endsWith('/store');
+  const isProductScreen = pathname.endsWith('/product');
+  const isCategoryScreen = pathname.endsWith('/category');
+  const isCommerceScreen =
+    pathname.endsWith('/cart') || pathname.endsWith('/checkout');
 
   return (
     <>
       <StatusBar
-        hidden={!(isAuthenticationScreen || isHomeScreen || isProfileScreen || isStoreScreen)}
-        style={isProfileScreen || isStoreScreen ? 'light' : 'dark'}
+        hidden={
+          !(
+            isAuthenticationScreen ||
+            isHomeScreen ||
+            isProfileScreen ||
+            isStoreScreen ||
+            isProductScreen ||
+            isCategoryScreen ||
+            isCommerceScreen
+          )
+        }
+        style={isProfileScreen || isStoreScreen || isProductScreen ? 'light' : 'dark'}
       />
       <Stack
         initialRouteName="index"
@@ -61,6 +76,8 @@ function RootLayoutNav() {
         <Stack.Screen name="cart" options={{ headerShown: false }} />
         <Stack.Screen name="store" options={{ headerShown: false }} />
         <Stack.Screen name="category" options={{ headerShown: false }} />
+        <Stack.Screen name="product" options={{ headerShown: false }} />
+        <Stack.Screen name="checkout" options={{ headerShown: false }} />
       </Stack>
     </>
   );
@@ -87,13 +104,15 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <ErrorBoundary>
         <QueryClientProvider client={queryClient}>
-          <GestureHandlerRootView
-            style={{ flex: 1, backgroundColor: colors.light.brandDeepGreen }}
-          >
-            <KeyboardProvider>
-              <RootLayoutNav />
-            </KeyboardProvider>
-          </GestureHandlerRootView>
+          <CartProvider>
+            <GestureHandlerRootView
+              style={{ flex: 1, backgroundColor: colors.light.brandDeepGreen }}
+            >
+              <KeyboardProvider>
+                <RootLayoutNav />
+              </KeyboardProvider>
+            </GestureHandlerRootView>
+          </CartProvider>
         </QueryClientProvider>
       </ErrorBoundary>
     </SafeAreaProvider>

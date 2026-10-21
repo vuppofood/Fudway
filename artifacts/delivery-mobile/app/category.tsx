@@ -19,7 +19,7 @@ import { useColors } from '@/hooks/useColors';
 
 type CategoryName = 'Lanches' | 'Restaurantes' | 'Padaria' | 'Doces e bolos' | 'Bebidas';
 type CategoryIcon = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
-type FilterKey = 'openNow' | 'nearby' | 'promotion' | 'freeDelivery';
+type FilterKey = 'sort' | 'freeDelivery' | 'rating4' | 'under40' | 'promotion';
 
 const categoryNames: CategoryName[] = [
   'Lanches',
@@ -38,10 +38,11 @@ const categoryIcons: Record<CategoryName, CategoryIcon> = {
 };
 
 const filterOptions: { id: FilterKey; label: string }[] = [
-  { id: 'openNow', label: 'Abertos agora' },
-  { id: 'nearby', label: 'Perto de mim' },
-  { id: 'promotion', label: 'Promoção' },
+  { id: 'sort', label: 'Ordenar' },
   { id: 'freeDelivery', label: 'Entrega grátis' },
+  { id: 'rating4', label: 'Avaliação 4+' },
+  { id: 'under40', label: 'Até 40 min' },
+  { id: 'promotion', label: 'Promoções' },
 ];
 
 function StoreListCard({ restaurant }: { restaurant: Restaurant }) {
@@ -54,8 +55,8 @@ function StoreListCard({ restaurant }: { restaurant: Restaurant }) {
       params: {
         name: restaurant.name,
         cuisine: restaurant.cuisine,
-        rating: restaurant.rating,
-        delivery: restaurant.delivery,
+        rating: restaurant.categoryRating ?? restaurant.rating,
+        delivery: restaurant.categoryDelivery ?? restaurant.delivery,
         freeDelivery: restaurant.freeDelivery ? 'true' : 'false',
       },
     });
@@ -76,16 +77,16 @@ function StoreListCard({ restaurant }: { restaurant: Restaurant }) {
       ]}
     >
       <View style={styles.storeImageFrame}>
-        {restaurant.image ? (
+        {restaurant.categoryImage ?? restaurant.image ? (
           <Image
-            source={restaurant.image as ImageSourcePropType}
+            source={(restaurant.categoryImage ?? restaurant.image) as ImageSourcePropType}
             style={styles.storeImage}
             resizeMode="cover"
           />
         ) : (
           <View style={[styles.logoImage, { backgroundColor: colors.brandDeepGreen }]}>
             <Text style={styles.logoText}>
-              SUB<Text style={{ color: colors.brandYellow }}>WAY</Text>
+              B<Text style={{ color: colors.brandYellow }}>!</Text>
             </Text>
           </View>
         )}
@@ -107,29 +108,29 @@ function StoreListCard({ restaurant }: { restaurant: Restaurant }) {
             />
           ) : null}
         </View>
-        <Text
-          numberOfLines={1}
-          style={[styles.storeCuisine, { color: colors.mutedForeground }]}
-        >
-          {restaurant.cuisine}
-        </Text>
         <View style={styles.storeMetaRow}>
-          <Feather name="star" size={13} color={colors.brandGreen} />
+          <MaterialCommunityIcons name="star" size={14} color={colors.brandGreen} />
           <Text style={[styles.storeRating, { color: colors.foreground }]}>
-            {restaurant.rating}
+            {restaurant.categoryRating ?? restaurant.rating}
           </Text>
-          <View style={[styles.metaDot, { backgroundColor: colors.brandMutedGreen }]} />
           <Feather name="clock" size={13} color={colors.brandMutedGreen} />
           <Text
             numberOfLines={1}
             style={[styles.storeDelivery, { color: colors.mutedForeground }]}
           >
-            {restaurant.delivery}
+            {restaurant.categoryDelivery ?? restaurant.delivery}
+          </Text>
+        </View>
+        <View style={styles.deliveryLabel}>
+          <MaterialCommunityIcons name="moped" size={15} color={colors.brandGreen} />
+          <Text style={[styles.freeDeliveryText, { color: colors.brandGreen }]}>
+            {restaurant.freeDelivery
+              ? 'Grátis'
+              : `R$ ${(restaurant.categoryDeliveryFee ?? 4.9).toFixed(2).replace('.', ',')}`}
           </Text>
         </View>
       </View>
 
-      <Feather name="chevron-right" size={20} color={colors.brandMutedGreen} />
     </Pressable>
   );
 }
@@ -139,13 +140,18 @@ export default function CategoryScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const params = useLocalSearchParams<{ category?: string }>();
-  const topInset = Platform.OS === 'web' ? 67 : insets.top;
+  const topInset = Platform.OS === 'web' ? 40 : insets.top;
   const categoryName: CategoryName =
     categoryNames.find((name) => name === params.category) ?? 'Restaurantes';
   const [search, setSearch] = useState('');
   const [activeFilters, setActiveFilters] = useState<FilterKey[]>([]);
+  const [sortByRating, setSortByRating] = useState(false);
 
   const toggleFilter = (filter: FilterKey) => {
+    if (filter === 'sort') {
+      setSortByRating((current) => !current);
+      return;
+    }
     setActiveFilters((current) =>
       current.includes(filter)
         ? current.filter((selected) => selected !== filter)
@@ -173,15 +179,35 @@ export default function CategoryScreen() {
     });
 
     const query = search.trim().toLocaleLowerCase('pt-BR');
-    return matchingRestaurants.filter(
-      (restaurant) =>
-        activeFilters.every((filter) => restaurant[filter]) &&
+    const filtered = matchingRestaurants.filter((restaurant) => {
+      const meetsFilters = activeFilters.every((filter) => {
+        if (filter === 'freeDelivery') return restaurant.freeDelivery;
+        if (filter === 'rating4') {
+          return Number(restaurant.categoryRating ?? restaurant.rating) >= 4;
+        }
+        if (filter === 'under40') {
+          const firstMinute = Number(
+            (restaurant.categoryDelivery ?? restaurant.delivery).match(/\d+/)?.[0] ?? 99,
+          );
+          return firstMinute <= 40;
+        }
+        return restaurant.promotion;
+      });
+      return (
+        meetsFilters &&
         (!query ||
           `${restaurant.name} ${restaurant.cuisine}`
             .toLocaleLowerCase('pt-BR')
-            .includes(query)),
-    );
-  }, [activeFilters, categoryName, search]);
+            .includes(query))
+      );
+    });
+    return sortByRating
+      ? filtered.sort(
+          (a, b) =>
+            Number(b.categoryRating ?? b.rating) - Number(a.categoryRating ?? a.rating),
+        )
+      : filtered;
+  }, [activeFilters, categoryName, search, sortByRating]);
 
   const hasCategoryStores = restaurants.some((restaurant) => {
     if (categoryName === 'Restaurantes') return true;
@@ -195,56 +221,71 @@ export default function CategoryScreen() {
   });
 
   return (
-    <View style={[styles.screen, { backgroundColor: colors.brandCream }]}>
-      <StatusBar barStyle="dark-content" backgroundColor={colors.brandCream} />
+    <View style={[styles.screen, { backgroundColor: colors.card }]}>
+      <StatusBar barStyle="dark-content" backgroundColor={colors.card} />
       <View
         style={[
           styles.header,
           {
-            backgroundColor: colors.brandCream,
-            paddingTop: topInset + 8,
+            backgroundColor: colors.card,
+            paddingTop: topInset + 4,
           },
         ]}
       >
-        <View style={styles.headerTools}>
+        <View style={styles.headingRow}>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Voltar"
             testID="category-back"
             onPress={() => router.back()}
             hitSlop={10}
-            style={[styles.backButton, { backgroundColor: colors.brandMint }]}
+            style={[styles.backButton, { backgroundColor: colors.card, borderColor: colors.border }]}
           >
             <Feather name="arrow-left" size={21} color={colors.brandDeepGreen} />
           </Pressable>
-          <View
-            style={[
-              styles.searchBar,
-              { backgroundColor: '#ffffff', borderColor: colors.brandDeepGreen },
-            ]}
+          <Text style={[styles.categoryHeaderTitle, { color: colors.foreground }]}>
+            {categoryName === 'Lanches' ? 'Hambúrguer' : categoryName}
+          </Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Ordenar por avaliação"
+            onPress={() => toggleFilter('sort')}
+            style={styles.headerFilter}
           >
-            <Feather name="search" size={19} color={colors.brandDeepGreen} />
-            <TextInput
-              accessibilityLabel={`Buscar em ${categoryName}`}
-              testID="category-search"
-              value={search}
-              onChangeText={setSearch}
-              placeholder="Buscar loja ou tipo de comida"
-              placeholderTextColor={colors.mutedForeground}
-              returnKeyType="search"
-              style={[styles.searchInput, { color: colors.foreground }]}
-            />
-            {search ? (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Limpar busca"
-                onPress={() => setSearch('')}
-                hitSlop={8}
-              >
-                <Feather name="x-circle" size={17} color={colors.brandMutedGreen} />
-              </Pressable>
-            ) : null}
-          </View>
+            <Feather name="sliders" size={21} color={colors.foreground} />
+          </Pressable>
+        </View>
+        <View
+          style={[
+            styles.searchBar,
+            { backgroundColor: '#ffffff', borderColor: colors.border },
+          ]}
+        >
+          <Feather name="search" size={19} color={colors.brandMutedGreen} />
+          <TextInput
+            accessibilityLabel={`Buscar em ${categoryName}`}
+            testID="category-search"
+            value={search}
+            onChangeText={setSearch}
+            placeholder={
+              categoryName === 'Lanches'
+                ? 'Busque por hambúrguer, batata...'
+                : 'Buscar loja ou tipo de comida'
+            }
+            placeholderTextColor={colors.mutedForeground}
+            returnKeyType="search"
+            style={[styles.searchInput, { color: colors.foreground }]}
+          />
+          {search ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Limpar busca"
+              onPress={() => setSearch('')}
+              hitSlop={8}
+            >
+              <Feather name="x-circle" size={17} color={colors.brandMutedGreen} />
+            </Pressable>
+          ) : null}
         </View>
       </View>
 
@@ -257,9 +298,16 @@ export default function CategoryScreen() {
         ]}
       >
         <View style={styles.filtersViewport}>
-          <View style={styles.filterGrid}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filterGrid}
+          >
             {filterOptions.map((filter) => {
-              const selected = activeFilters.includes(filter.id);
+              const selected =
+                filter.id === 'sort'
+                  ? sortByRating
+                  : activeFilters.includes(filter.id);
               return (
                 <Pressable
                   key={filter.id}
@@ -271,8 +319,8 @@ export default function CategoryScreen() {
                   style={[
                     styles.filterChip,
                     {
-                      backgroundColor: colors.brandCream,
-                      borderColor: selected ? colors.brandGreen : colors.brandMutedGreen,
+                      borderColor: selected ? colors.brandGreen : colors.border,
+                      backgroundColor: selected ? colors.brandMint : colors.card,
                     },
                   ]}
                 >
@@ -287,13 +335,29 @@ export default function CategoryScreen() {
                 </Pressable>
               );
             })}
-          </View>
+          </ScrollView>
         </View>
 
         <View style={styles.resultsHeading}>
           <Text style={[styles.resultsTitle, { color: colors.foreground }]}>
-            {categoryName}
+            {categoryName === 'Lanches'
+              ? 'Restaurantes com hambúrguer'
+              : `Restaurantes de ${categoryName.toLocaleLowerCase('pt-BR')}`}
           </Text>
+          <Pressable
+            accessibilityRole="button"
+            testID="category-see-all"
+            onPress={() =>
+              router.replace({
+                pathname: '/category',
+                params: { category: 'Restaurantes' },
+              })
+            }
+            style={styles.seeAllButton}
+          >
+            <Text style={[styles.seeAllText, { color: colors.brandGreen }]}>Ver tudo</Text>
+            <Feather name="arrow-right" size={15} color={colors.brandGreen} />
+          </Pressable>
         </View>
 
         {categoryRestaurants.length > 0 ? (
@@ -356,6 +420,42 @@ export default function CategoryScreen() {
           </View>
         )}
       </ScrollView>
+
+      <View
+        style={[
+          styles.bottomTabs,
+          {
+            backgroundColor: colors.card,
+            borderTopColor: colors.border,
+            paddingBottom: Math.max(insets.bottom, Platform.OS === 'web' ? 10 : 7),
+          },
+        ]}
+      >
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.replace('/(tabs)')}
+          style={styles.bottomTab}
+        >
+          <Feather name="home" size={22} color={colors.brandGreen} />
+          <Text style={[styles.bottomTabLabel, { color: colors.brandGreen }]}>Início</Text>
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.push('/(tabs)/orders')}
+          style={styles.bottomTab}
+        >
+          <Feather name="clipboard" size={21} color={colors.mutedForeground} />
+          <Text style={[styles.bottomTabLabel, { color: colors.mutedForeground }]}>Pedidos</Text>
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.push('/(tabs)/profile')}
+          style={styles.bottomTab}
+        >
+          <Feather name="user" size={22} color={colors.mutedForeground} />
+          <Text style={[styles.bottomTabLabel, { color: colors.mutedForeground }]}>Perfil</Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -363,77 +463,104 @@ export default function CategoryScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   header: {
-    paddingHorizontal: 19,
-    paddingBottom: 10,
+    paddingHorizontal: 16,
+    paddingBottom: 11,
   },
-  headerTools: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  headingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 },
   backButton: {
-    width: 40,
-    height: 40,
+    width: 38,
+    height: 38,
     borderRadius: 20,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#e9f3ed',
+    shadowColor: '#14251b',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 5,
+    elevation: 2,
   },
+  categoryHeaderTitle: { fontSize: 19, fontWeight: '800' },
+  headerFilter: { width: 38, alignItems: 'flex-end', justifyContent: 'center' },
   searchBar: {
-    flex: 1,
-    minHeight: 46,
-    borderRadius: 24,
+    minHeight: 44,
+    marginTop: 10,
+    borderRadius: 15,
     borderWidth: 1,
-    paddingHorizontal: 14,
+    paddingHorizontal: 13,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 9,
+    shadowColor: '#14251b',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07,
+    shadowRadius: 5,
+    elevation: 2,
   },
-  searchInput: { flex: 1, fontSize: 13, paddingVertical: 9 },
-  content: { flexGrow: 1, paddingHorizontal: 15, paddingTop: 21 },
-  filtersViewport: { marginBottom: 17 },
-  filterGrid: { flexDirection: 'row', gap: 5 },
+  searchInput: { flex: 1, fontSize: 13, paddingVertical: 8 },
+  content: { flexGrow: 1, paddingHorizontal: 15, paddingTop: 11 },
+  filtersViewport: { marginBottom: 18 },
+  filterGrid: { flexDirection: 'row', gap: 7, paddingRight: 16 },
   filterChip: {
-    flex: 1,
     minHeight: 38,
-    borderWidth: 1.5,
     borderRadius: 19,
-    paddingHorizontal: 3,
+    borderWidth: 1,
+    paddingHorizontal: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
   filterText: {
-    flexShrink: 1,
-    fontSize: 9,
-    fontWeight: '700',
+    fontSize: 11,
+    fontWeight: '600',
     textAlign: 'center',
   },
   resultsHeading: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 14,
+    marginBottom: 11,
   },
-  resultsTitle: { fontSize: 18, fontWeight: '800', letterSpacing: -0.2 },
-  storeList: { gap: 11 },
+  resultsTitle: { flex: 1, fontSize: 15, fontWeight: '800', letterSpacing: -0.2 },
+  seeAllButton: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingLeft: 6 },
+  seeAllText: { fontSize: 12, fontWeight: '600' },
+  storeList: { gap: 9 },
   storeCard: {
-    minHeight: 104,
-    padding: 10,
+    minHeight: 123,
+    padding: 6,
     borderWidth: 1,
-    borderRadius: 17,
+    borderRadius: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 11,
   },
-  storeImageFrame: { width: 82, height: 82, borderRadius: 13, overflow: 'hidden' },
+  storeImageFrame: { width: '47%', height: 109, borderRadius: 12, overflow: 'hidden' },
   storeImage: { width: '100%', height: '100%' },
   logoImage: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   logoText: { color: '#ffffff', fontSize: 14, fontWeight: '900', letterSpacing: -0.5 },
-  storeDetails: { flex: 1, gap: 5 },
+  storeDetails: { flex: 1, gap: 8, paddingRight: 4 },
   storeTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   storeName: { flexShrink: 1, fontSize: 14, fontWeight: '800' },
   storeCuisine: { fontSize: 11 },
   storeMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 1 },
-  storeRating: { fontSize: 11, fontWeight: '700' },
+  storeRating: { fontSize: 11, fontWeight: '600', marginRight: 4 },
   metaDot: { width: 3, height: 3, borderRadius: 2, marginHorizontal: 1 },
   storeDelivery: { flexShrink: 1, fontSize: 10 },
+  deliveryLabel: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: -1 },
+  freeDeliveryText: { fontSize: 11, fontWeight: '600' },
+  bottomTabs: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 72,
+    borderTopWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+  },
+  bottomTab: { minWidth: 70, alignItems: 'center', justifyContent: 'center', gap: 2 },
+  bottomTabLabel: { fontSize: 11, fontWeight: '600' },
   emptyCard: {
     minHeight: 300,
     borderWidth: 1,

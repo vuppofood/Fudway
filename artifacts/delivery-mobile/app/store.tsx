@@ -14,6 +14,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useCart } from '@/contexts/CartContext';
 import { useColors } from '@/hooks/useColors';
 
 type StoreCategory = 'Hambúrgueres' | 'Combos' | 'Porções' | 'Bebidas' | 'Sobremesas';
@@ -75,7 +76,7 @@ const subwayMenu: MenuItem[] = [
     id: 'combo-bacon',
     name: 'Combo Bacon',
     description: 'Hambúrguer + batata média + refrigerante 350ml',
-    price: 37.9,
+    price: 29.9,
     category: 'Combos',
     image: require('../assets/images/reference/combo-bacon.jpg'),
   },
@@ -272,6 +273,7 @@ export default function StoreScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { items: cartItems, itemCount, subtotal: cartTotal } = useCart();
   const params = useLocalSearchParams<{
     name?: string;
     cuisine?: string;
@@ -279,7 +281,7 @@ export default function StoreScreen() {
     delivery?: string;
     freeDelivery?: string;
   }>();
-  const topInset = Platform.OS === 'web' ? 54 : insets.top;
+  const topInset = Platform.OS === 'web' ? 20 : insets.top;
   const storeName = params.name || 'Buncker';
   const cuisine = params.cuisine || 'Hambúrgueres';
   const rating = params.rating || '4.8';
@@ -292,11 +294,6 @@ export default function StoreScreen() {
       : require('../assets/images/promo-hero.jpg');
   const [activeTab, setActiveTab] = useState<StoreTab>('Cardápio');
   const [activeCategory, setActiveCategory] = useState<MenuFilter>('Todos');
-  const [addedItems, setAddedItems] = useState<Record<string, number>>({
-    'buncker-classico': 1,
-    'buncker-bacon': 1,
-  });
-
   const menuSections = useMemo(
     () =>
       categories
@@ -309,18 +306,25 @@ export default function StoreScreen() {
         .filter((section) => section.items.length > 0),
     [activeCategory, menu],
   );
-  const itemCount = Object.values(addedItems).reduce((sum, quantity) => sum + quantity, 0);
-  const cartTotal = menu.reduce(
-    (sum, item) => sum + item.price * (addedItems[item.id] ?? 0),
-    0,
-  );
-
-  const addItem = (item: MenuItem) => {
-    setAddedItems((current) => ({
-      ...current,
-      [item.id]: (current[item.id] ?? 0) + 1,
-    }));
-  };
+  const openProduct = (item: MenuItem) =>
+    router.push({
+      pathname: '/product',
+      params: {
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        price: String(item.price),
+        image: String(item.image),
+        category: item.category,
+        storeName,
+        cuisine,
+      },
+    });
+  const getItemQuantity = (id: string) =>
+    cartItems.reduce(
+      (quantity, cartItem) => quantity + (cartItem.id === id ? cartItem.quantity : 0),
+      0,
+    );
 
   const shareStore = async () => {
     try {
@@ -380,7 +384,12 @@ export default function StoreScreen() {
               </Pressable>
             </View>
           </View>
-          <View style={[styles.heroCopy, { top: topInset + 18 }]}>
+          <View
+            style={[
+              styles.heroCopy,
+              { top: Platform.OS === 'web' ? 52 : topInset + 18 },
+            ]}
+          >
             <View style={styles.brandLockup}>
               <Text style={styles.storeWordmark}>{storeName}</Text>
               <View style={[styles.brandUnderline, { backgroundColor: colors.brandYellow }]} />
@@ -458,7 +467,13 @@ export default function StoreScreen() {
 
               <View style={styles.menuContent}>
                 {menuSections.length > 0 ? menuSections.map((section) => (
-                  <View key={section.category} style={styles.menuSection}>
+                  <View
+                    key={section.category}
+                    style={[
+                      styles.menuSection,
+                      section.category === 'Combos' ? styles.lastVisibleMenuSection : null,
+                    ]}
+                  >
                     <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
                       {section.category}
                     </Text>
@@ -474,7 +489,14 @@ export default function StoreScreen() {
                               { height: item.category === 'Combos' ? 68 : 86 },
                             ]}
                           >
-                            <Image source={item.image} style={styles.menuImage} resizeMode="cover" />
+                            <Pressable
+                              accessibilityRole="button"
+                              accessibilityLabel={`Ver ${item.name}`}
+                              onPress={() => openProduct(item)}
+                              style={StyleSheet.absoluteFill}
+                            >
+                              <Image source={item.image} style={styles.menuImage} resizeMode="cover" />
+                            </Pressable>
                             <Pressable
                               accessibilityRole="button"
                               accessibilityLabel={`Favoritar ${item.name}`}
@@ -495,9 +517,15 @@ export default function StoreScreen() {
                                   : null,
                             ]}
                           >
-                            <Text numberOfLines={1} style={[styles.menuName, { color: colors.foreground }]}>
-                              {item.name}
-                            </Text>
+                            <Pressable
+                              accessibilityRole="button"
+                              accessibilityLabel={`Ver ${item.name}`}
+                              onPress={() => openProduct(item)}
+                            >
+                              <Text numberOfLines={1} style={[styles.menuName, { color: colors.foreground }]}>
+                                {item.name}
+                              </Text>
+                            </Pressable>
                             <Text
                               numberOfLines={item.category === 'Hambúrgueres' ? 4 : 2}
                               style={[styles.menuDescription, { color: colors.mutedForeground }]}
@@ -509,8 +537,8 @@ export default function StoreScreen() {
                             </Text>
                             <Pressable
                               accessibilityRole="button"
-                              accessibilityLabel={`Adicionar ${item.name} à sacola`}
-                              onPress={() => addItem(item)}
+                              accessibilityLabel={`Personalizar ${item.name}`}
+                              onPress={() => openProduct(item)}
                               style={({ pressed }) => [
                                 styles.addButton,
                                 { backgroundColor: colors.brandTomato, opacity: pressed ? 0.8 : 1 },
@@ -518,7 +546,9 @@ export default function StoreScreen() {
                             >
                               <Feather name="plus" size={14} color="#ffffff" />
                               <Text style={styles.addLabel}>
-                                {addedItems[item.id] ? `Adicionar (${addedItems[item.id]})` : 'Adicionar'}
+                                {getItemQuantity(item.id)
+                                  ? `Adicionar (${getItemQuantity(item.id)})`
+                                  : 'Adicionar'}
                               </Text>
                             </Pressable>
                           </View>
@@ -587,7 +617,7 @@ export default function StoreScreen() {
             styles.cartBar,
             {
               backgroundColor: colors.brandInk,
-              bottom: Platform.OS === 'web' ? 31 : Math.max(insets.bottom, 8),
+              bottom: Platform.OS === 'web' ? 8 : Math.max(insets.bottom, 8),
             },
           ]}
         >
@@ -624,7 +654,7 @@ export default function StoreScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   scrollContent: { paddingBottom: 24 },
-  hero: { height: 204, overflow: 'hidden' },
+  hero: { height: 185, overflow: 'hidden' },
   heroImage: {
     position: 'absolute',
     width: '100%',
@@ -743,7 +773,8 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   menuContent: { paddingHorizontal: 16, paddingTop: 7 },
-  menuSection: { marginBottom: 10 },
+  menuSection: { marginBottom: 8 },
+  lastVisibleMenuSection: { marginBottom: 84 },
   sectionTitle: { fontSize: 20, fontWeight: '800', marginBottom: 9, letterSpacing: -0.3 },
   menuGrid: {
     flexDirection: 'row',
@@ -773,7 +804,7 @@ const styles = StyleSheet.create({
   },
   menuCardBody: { paddingHorizontal: 6, paddingVertical: 7, gap: 4 },
   burgerCardBody: { minHeight: 117 },
-  comboCardBody: { minHeight: 100 },
+  comboCardBody: { minHeight: 96 },
   menuName: { fontSize: 10.5, fontWeight: '700' },
   menuDescription: { fontSize: 8.5, lineHeight: 11, minHeight: 22 },
   menuPrice: { marginTop: 1, fontSize: 11, fontWeight: '800' },

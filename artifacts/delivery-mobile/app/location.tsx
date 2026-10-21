@@ -33,7 +33,7 @@ type SavedAddress = {
 
 const initialAddresses: SavedAddress[] = [
   {
-    street: 'Rua das Palmeiras, 258',
+    street: 'Rua das Palmeiras, 123',
     detail: 'Casa',
     label: 'Casa',
     icon: 'home',
@@ -53,7 +53,7 @@ export default function LocationScreen() {
   const [selectedAddress, setSelectedAddress] = useState(getDeliveryAddress);
   const [search, setSearch] = useState('');
   const [street, setStreet] = useState('Rua das Palmeiras');
-  const [number, setNumber] = useState('258');
+  const [number, setNumber] = useState('123');
   const [complement, setComplement] = useState('');
   const [reference, setReference] = useState('');
   const [label, setLabel] = useState<AddressLabel>('Casa');
@@ -133,7 +133,7 @@ export default function LocationScreen() {
                 accessibilityRole="button"
                 onPress={() => {
                   setStreet('Rua das Palmeiras');
-                  setNumber('258');
+                  setNumber('123');
                   setStep('map');
                 }}
                 style={styles.locationButton}

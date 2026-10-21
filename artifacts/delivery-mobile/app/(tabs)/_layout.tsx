@@ -32,8 +32,8 @@ export default function TabLayout() {
           shadowOffset: { width: 0, height: -3 },
           shadowOpacity: 0.1,
           shadowRadius: 8,
-          height: isWeb ? 72 : 66 + insets.bottom,
-          paddingBottom: isWeb ? 18 : Math.max(insets.bottom, 8),
+          height: isWeb ? 62 : 66 + insets.bottom,
+          paddingBottom: isWeb ? 6 : Math.max(insets.bottom, 8),
         },
       }}
     >

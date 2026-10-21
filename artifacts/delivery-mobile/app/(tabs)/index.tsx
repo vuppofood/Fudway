@@ -255,11 +255,13 @@ function CategoryArtwork({
 function RestaurantCard({
   restaurant,
   displayImage,
+  compact = false,
   favorite,
   onToggleFavorite,
 }: {
   restaurant: Restaurant;
   displayImage?: number;
+  compact?: boolean;
   favorite: boolean;
   onToggleFavorite: () => void;
 }) {
@@ -279,7 +281,7 @@ function RestaurantCard({
 
   return (
     <View style={[styles.restaurantCard, { borderColor: colors.border }]}>
-      <View style={styles.restaurantImage}>
+      <View style={[styles.restaurantImage, compact ? styles.restaurantImageCompact : null]}>
         {displayImage ?? restaurant.image ? (
           <Pressable
             accessibilityRole="button"
@@ -375,7 +377,7 @@ export default function HomeScreen() {
     );
   }, [search]);
 
-  const topInset = Platform.OS === 'web' ? 40 : insets.top;
+  const topInset = Platform.OS === 'web' ? 32 : insets.top;
   const featuredRestaurants = visibleRestaurants.slice(0, 3);
 
   const toggleFavorite = (name: string) => {
@@ -562,6 +564,7 @@ export default function HomeScreen() {
                           ? restaurant.storeImage ?? restaurant.image
                           : restaurant.image
                       }
+                      compact={title === 'Lojas'}
                       favorite={favoriteNames.includes(restaurant.name)}
                       onToggleFavorite={() => toggleFavorite(restaurant.name)}
                     />
@@ -586,13 +589,13 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   scrollContent: { flexGrow: 1, paddingBottom: 108 },
-  header: { paddingHorizontal: 13, paddingBottom: 8 },
+  header: { paddingHorizontal: 13, paddingBottom: 6 },
   topBar: {
-    minHeight: 44,
+    minHeight: 42,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   addressButton: {
     flex: 1,
@@ -625,7 +628,7 @@ const styles = StyleSheet.create({
     borderColor: '#ffffff',
   },
   searchBar: {
-    minHeight: 44,
+    minHeight: 42,
     borderRadius: 18,
     paddingHorizontal: 16,
     flexDirection: 'row',
@@ -638,8 +641,8 @@ const styles = StyleSheet.create({
   categoriesRow: {
     flexDirection: 'row',
     gap: 8,
-    paddingTop: 12,
-    paddingBottom: 16,
+    paddingTop: 8,
+    paddingBottom: 14,
   },
   categoryItem: { alignItems: 'center', flex: 1, gap: 5, minWidth: 0 },
   categoryIcon: {
@@ -655,7 +658,7 @@ const styles = StyleSheet.create({
   },
   categoryIconSelected: { borderColor: '#54d69a', borderWidth: 1.5, backgroundColor: '#e8f8ef' },
   categoryImage: { width: '100%', height: '100%', borderRadius: 10 },
-  categoryLabel: { fontSize: 11, fontWeight: '600', textAlign: 'center' },
+  categoryLabel: { fontSize: 10.5, fontWeight: '600', textAlign: 'center' },
   heroBanner: {
     height: 184,
     overflow: 'hidden',
@@ -722,7 +725,7 @@ const styles = StyleSheet.create({
   },
   heroPageDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#ffffff99' },
   heroPageDotActive: { backgroundColor: '#53d78d', width: 9, height: 9 },
-  featuredSection: { marginHorizontal: 1, marginBottom: 23 },
+  featuredSection: { marginHorizontal: 1, marginBottom: 15 },
   sectionHeading: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -746,6 +749,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
   },
   restaurantImage: { width: '100%', height: 84, overflow: 'hidden', position: 'relative' },
+  restaurantImageCompact: { height: 72 },
   restaurantPhoto: { width: '100%', height: '100%' },
   subwayArtwork: {
     flex: 1,
