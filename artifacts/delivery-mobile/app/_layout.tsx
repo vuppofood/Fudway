@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View } from 'react-native';
+import { Image, View } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
@@ -57,7 +57,7 @@ function RootLayoutNav() {
             isCommerceScreen
           )
         }
-        style={isProfileScreen || isStoreScreen || isProductScreen ? 'light' : 'dark'}
+        style={isStoreScreen || isProductScreen ? 'light' : 'dark'}
       />
       <Stack
         initialRouteName="index"
@@ -84,21 +84,64 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
-  useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     ...Feather.font,
     Inter_400Regular,
     Inter_500Medium,
     Inter_600SemiBold,
     Inter_700Bold,
   });
+  const [appReady, setAppReady] = React.useState(false);
 
   useEffect(() => {
-    const frame = requestAnimationFrame(() => {
-      SplashScreen.hideAsync();
-    });
+    if (!fontsLoaded && !fontError) {
+      return;
+    }
 
-    return () => cancelAnimationFrame(frame);
-  }, []);
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
+    const showAppAfterSplash = async () => {
+      try {
+        await SplashScreen.hideAsync();
+      } catch (error) {
+        console.error('Failed to hide splash screen:', error);
+      }
+
+      if (!cancelled) {
+        timer = setTimeout(() => setAppReady(true), 2500);
+      }
+    };
+
+    showAppAfterSplash();
+
+    return () => {
+      cancelled = true;
+      if (timer) {
+        clearTimeout(timer);
+      }
+    };
+  }, [fontsLoaded, fontError]);
+
+  if (!appReady) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: '#05462B',
+        }}
+      >
+        <StatusBar style="light" />
+        <Image
+          source={require('../assets/images/fudway_logo_white_transparent.png')}
+          resizeMode="contain"
+          style={{ width: 280, height: 100 }}
+        />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaProvider>

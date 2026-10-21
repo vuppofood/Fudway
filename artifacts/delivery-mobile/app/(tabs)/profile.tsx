@@ -1,8 +1,7 @@
 import React from 'react';
-import { Feather, FontAwesome } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import {
   Alert,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -14,9 +13,10 @@ import { useColors } from '@/hooks/useColors';
 
 const profileOptions = [
   { label: 'Dados da conta', icon: 'user' as const },
+  { label: 'Forma de pagamento', icon: 'credit-card' as const },
   { label: 'Favoritos', icon: 'heart' as const },
   { label: 'Endereço de entrega', icon: 'map-pin' as const },
-  { label: 'Código de entrega', icon: 'tag' as const },
+  { label: 'Código de entrega', icon: 'key' as const },
   { label: 'Cupons e descontos', icon: 'percent' as const },
   { label: 'Ajuda', icon: 'headphones' as const },
   { label: 'Configuração', icon: 'settings' as const },
@@ -25,33 +25,14 @@ const profileOptions = [
 export default function ProfileScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const topInset = Platform.OS === 'web' ? 67 : Platform.OS === 'android' ? 0 : insets.top;
 
   return (
     <View style={[styles.screen, { backgroundColor: '#ffffff' }]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[
-          styles.scrollContent,
-          {
-            paddingBottom: Platform.OS === 'web'
-              ? 104
-              : 66 + Math.max(insets.bottom, 8),
-          },
-        ]}
+        contentContainerStyle={styles.scrollContent}
       >
-        <View
-          style={[
-            styles.topArea,
-            {
-              backgroundColor: colors.brandDeepGreen,
-              paddingTop: topInset + (Platform.OS === 'android' ? 24 : 14),
-            },
-          ]}
-        >
-        </View>
-
-        <View style={styles.content}>
+        <View style={[styles.content, { paddingTop: insets.top + 24 }]}>
           <Pressable
             accessibilityRole="button"
             onPress={() =>
@@ -62,8 +43,10 @@ export default function ProfileScreen() {
               { opacity: pressed ? 0.8 : 1 },
             ]}
           >
-            <View style={[styles.avatar, { backgroundColor: colors.brandDeepGreen }]}>
-              <FontAwesome name="user" size={31} color="#ffffff" />
+            <View style={styles.avatar}>
+              <Text style={[styles.avatarInitials, { color: colors.brandDeepGreen }]}>
+                KR
+              </Text>
             </View>
             <View style={styles.identityCopy}>
               <Text style={styles.profileName}>Keyson Reis Santos</Text>
@@ -88,14 +71,14 @@ export default function ProfileScreen() {
                   <View style={styles.optionRow}>
                     <Feather
                       name={option.icon}
-                      size={30}
+                      size={26}
                       color={colors.brandDeepGreen}
                       style={styles.optionIcon}
                     />
-                    <Text style={[styles.optionText, { color: '#1A1A1A' }]}>
+                    <Text style={[styles.optionText, { color: '#151515' }]}>
                       {option.label}
                     </Text>
-                    <Feather name="chevron-right" size={22} color={colors.brandDeepGreen} />
+                    <Feather name="chevron-right" size={25} color={colors.brandDeepGreen} />
                   </View>
                   {index < profileOptions.length - 1 ? (
                     <View style={[styles.optionDivider, { backgroundColor: colors.border }]} />
@@ -112,68 +95,56 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  scrollContent: { flexGrow: 1, paddingBottom: 24 },
-  topArea: {
-    minHeight: 132,
-    paddingHorizontal: 22,
-    paddingBottom: 8,
-    overflow: 'hidden',
-    borderBottomLeftRadius: 42,
-    borderBottomRightRadius: 42,
-  },
+  scrollContent: { flexGrow: 1, paddingBottom: 80 },
   profileIdentity: {
-    minHeight: 72,
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: 18,
-    marginBottom: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    backgroundColor: '#ffffff',
-    borderRadius: 18,
-    shadowColor: '#10261b',
-    shadowOffset: { width: 0, height: 7 },
-    shadowOpacity: 0.08,
-    shadowRadius: 13,
-    elevation: 4,
+    marginBottom: 30,
+    paddingHorizontal: 16,
+    paddingBottom: 4,
   },
   avatar: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 66,
+    height: 66,
+    marginBottom: 10,
+    borderRadius: 33,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#e5f2e9',
   },
-  identityCopy: { flex: 1, gap: 3 },
-  profileName: { color: '#151923', fontSize: 16, fontWeight: '700' },
-  profileEmail: { color: '#747b86', fontSize: 13 },
+  avatarInitials: {
+    fontSize: 31,
+    fontWeight: '700',
+    letterSpacing: -1,
+  },
+  identityCopy: {
+    alignItems: 'center',
+    gap: 3,
+  },
+  profileName: { color: '#111111', fontSize: 24, fontWeight: '700' },
+  profileEmail: { color: '#666666', fontSize: 16 },
   content: {
     flexGrow: 1,
-    paddingHorizontal: 16,
-    paddingBottom: 8,
-    marginTop: -34,
+    paddingHorizontal: 24,
+    paddingBottom: 12,
   },
-  options: {
-    paddingHorizontal: 8,
-  },
+  options: {},
   option: {
-    minHeight: 58,
+    minHeight: 55,
     justifyContent: 'center',
   },
   optionRow: {
-    minHeight: 58,
+    minHeight: 54,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
+    gap: 18,
   },
   optionDivider: {
     height: StyleSheet.hairlineWidth,
-    marginLeft: 56,
-    marginRight: 8,
+    marginLeft: 54,
   },
   optionIcon: {
-    width: 38,
+    width: 34,
     textAlign: 'center',
   },
-  optionText: { flex: 1, fontSize: 14, fontWeight: '700' },
+  optionText: { flex: 1, fontSize: 16, fontWeight: '600' },
 });

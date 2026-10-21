@@ -9,7 +9,7 @@
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/images/fudway_logo_white_transparent.png",
-      "imageWidth": 200,
+      "imageWidth": 280,
       "resizeMode": "contain",
       "backgroundColor": "#05462B"
     },
@@ -28,7 +28,7 @@
         "expo-splash-screen",
         {
           "image": "./assets/images/fudway_logo_white_transparent.png",
-          "imageWidth": 200,
+          "imageWidth": 280,
           "resizeMode": "contain",
           "backgroundColor": "#05462B"
         }
