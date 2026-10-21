@@ -19,7 +19,7 @@ import { useColors } from '@/hooks/useColors';
 
 type CategoryName = 'Lanches' | 'Restaurantes' | 'Padaria' | 'Doces e bolos' | 'Bebidas';
 type CategoryIcon = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
-type FilterKey = 'sort' | 'freeDelivery' | 'rating4' | 'under40' | 'promotion';
+type FilterKey = 'sort' | 'freeDelivery' | 'rating4' | 'promotion';
 
 const categoryNames: CategoryName[] = [
   'Lanches',
@@ -41,7 +41,6 @@ const filterOptions: { id: FilterKey; label: string }[] = [
   { id: 'sort', label: 'Ordenar' },
   { id: 'freeDelivery', label: 'Entrega grátis' },
   { id: 'rating4', label: 'Avaliação 4+' },
-  { id: 'under40', label: 'Até 40 min' },
   { id: 'promotion', label: 'Promoções' },
 ];
 
@@ -184,12 +183,6 @@ export default function CategoryScreen() {
         if (filter === 'freeDelivery') return restaurant.freeDelivery;
         if (filter === 'rating4') {
           return Number(restaurant.categoryRating ?? restaurant.rating) >= 4;
-        }
-        if (filter === 'under40') {
-          const firstMinute = Number(
-            (restaurant.categoryDelivery ?? restaurant.delivery).match(/\d+/)?.[0] ?? 99,
-          );
-          return firstMinute <= 40;
         }
         return restaurant.promotion;
       });
@@ -344,20 +337,6 @@ export default function CategoryScreen() {
               ? 'Restaurantes com hambúrguer'
               : `Restaurantes de ${categoryName.toLocaleLowerCase('pt-BR')}`}
           </Text>
-          <Pressable
-            accessibilityRole="button"
-            testID="category-see-all"
-            onPress={() =>
-              router.replace({
-                pathname: '/category',
-                params: { category: 'Restaurantes' },
-              })
-            }
-            style={styles.seeAllButton}
-          >
-            <Text style={[styles.seeAllText, { color: colors.brandGreen }]}>Ver tudo</Text>
-            <Feather name="arrow-right" size={15} color={colors.brandGreen} />
-          </Pressable>
         </View>
 
         {categoryRestaurants.length > 0 ? (
@@ -522,8 +501,6 @@ const styles = StyleSheet.create({
     marginBottom: 11,
   },
   resultsTitle: { flex: 1, fontSize: 15, fontWeight: '800', letterSpacing: -0.2 },
-  seeAllButton: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingLeft: 6 },
-  seeAllText: { fontSize: 12, fontWeight: '600' },
   storeList: { gap: 9 },
   storeCard: {
     minHeight: 123,

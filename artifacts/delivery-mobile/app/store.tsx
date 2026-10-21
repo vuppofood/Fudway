@@ -273,7 +273,7 @@ export default function StoreScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { items: cartItems, itemCount, subtotal: cartTotal } = useCart();
+  const { itemCount, subtotal: cartTotal } = useCart();
   const params = useLocalSearchParams<{
     name?: string;
     cuisine?: string;
@@ -320,12 +320,6 @@ export default function StoreScreen() {
         cuisine,
       },
     });
-  const getItemQuantity = (id: string) =>
-    cartItems.reduce(
-      (quantity, cartItem) => quantity + (cartItem.id === id ? cartItem.quantity : 0),
-      0,
-    );
-
   const shareStore = async () => {
     try {
       await Share.share({ message: `Confira ${storeName} no app de delivery.` });
@@ -497,26 +491,8 @@ export default function StoreScreen() {
                             >
                               <Image source={item.image} style={styles.menuImage} resizeMode="cover" />
                             </Pressable>
-                            <Pressable
-                              accessibilityRole="button"
-                              accessibilityLabel={`Favoritar ${item.name}`}
-                              onPress={() => Alert.alert(item.name, 'Adicione este produto aos favoritos em uma próxima versão.')}
-                              hitSlop={7}
-                              style={styles.productFavorite}
-                            >
-                              <Feather name="heart" size={16} color="#ffffff" />
-                            </Pressable>
                           </View>
-                          <View
-                            style={[
-                              styles.menuCardBody,
-                              item.category === 'Hambúrgueres'
-                                ? styles.burgerCardBody
-                                : item.category === 'Combos'
-                                  ? styles.comboCardBody
-                                  : null,
-                            ]}
-                          >
+                          <View style={styles.menuCardBody}>
                             <Pressable
                               accessibilityRole="button"
                               accessibilityLabel={`Ver ${item.name}`}
@@ -526,31 +502,9 @@ export default function StoreScreen() {
                                 {item.name}
                               </Text>
                             </Pressable>
-                            <Text
-                              numberOfLines={item.category === 'Hambúrgueres' ? 4 : 2}
-                              style={[styles.menuDescription, { color: colors.mutedForeground }]}
-                            >
-                              {item.description}
-                            </Text>
                             <Text style={[styles.menuPrice, { color: colors.foreground }]}>
                               {formatPrice(item.price)}
                             </Text>
-                            <Pressable
-                              accessibilityRole="button"
-                              accessibilityLabel={`Personalizar ${item.name}`}
-                              onPress={() => openProduct(item)}
-                              style={({ pressed }) => [
-                                styles.addButton,
-                                { backgroundColor: colors.brandTomato, opacity: pressed ? 0.8 : 1 },
-                              ]}
-                            >
-                              <Feather name="plus" size={14} color="#ffffff" />
-                              <Text style={styles.addLabel}>
-                                {getItemQuantity(item.id)
-                                  ? `Adicionar (${getItemQuantity(item.id)})`
-                                  : 'Adicionar'}
-                              </Text>
-                            </Pressable>
                           </View>
                         </View>
                       ))}
@@ -791,33 +745,9 @@ const styles = StyleSheet.create({
   },
   menuImageFrame: { position: 'relative', backgroundColor: '#161616' },
   menuImage: { width: '100%', height: '100%' },
-  productFavorite: {
-    position: 'absolute',
-    top: 5,
-    right: 5,
-    width: 23,
-    height: 23,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(0,0,0,0.32)',
-  },
   menuCardBody: { paddingHorizontal: 6, paddingVertical: 7, gap: 4 },
-  burgerCardBody: { minHeight: 117 },
-  comboCardBody: { minHeight: 96 },
   menuName: { fontSize: 10.5, fontWeight: '700' },
-  menuDescription: { fontSize: 8.5, lineHeight: 11, minHeight: 22 },
   menuPrice: { marginTop: 1, fontSize: 11, fontWeight: '800' },
-  addButton: {
-    minHeight: 25,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    gap: 3,
-    marginTop: 2,
-  },
-  addLabel: { color: '#ffffff', fontSize: 8.5, fontWeight: '700' },
   emptyMenu: {
     minHeight: 100,
     borderRadius: 12,

@@ -256,12 +256,14 @@ function RestaurantCard({
   restaurant,
   displayImage,
   compact = false,
+  showFavorite = true,
   favorite,
   onToggleFavorite,
 }: {
   restaurant: Restaurant;
   displayImage?: number;
   compact?: boolean;
+  showFavorite?: boolean;
   favorite: boolean;
   onToggleFavorite: () => void;
 }) {
@@ -307,16 +309,18 @@ function RestaurantCard({
             </Text>
           </Pressable>
         )}
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={favorite ? `Remover ${restaurant.name} dos favoritos` : `Favoritar ${restaurant.name}`}
-          accessibilityState={{ selected: favorite }}
-          onPress={onToggleFavorite}
-          hitSlop={8}
-          style={styles.favoriteButton}
-        >
-          <Feather name="heart" size={17} color={favorite ? '#ed2635' : '#ffffff'} />
-        </Pressable>
+        {showFavorite ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={favorite ? `Remover ${restaurant.name} dos favoritos` : `Favoritar ${restaurant.name}`}
+            accessibilityState={{ selected: favorite }}
+            onPress={onToggleFavorite}
+            hitSlop={8}
+            style={styles.favoriteButton}
+          >
+            <Feather name="heart" size={17} color={favorite ? '#ed2635' : '#ffffff'} />
+          </Pressable>
+        ) : null}
       </View>
       <Pressable
         accessibilityRole="button"
@@ -402,73 +406,73 @@ export default function HomeScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.card }]}>
+      <View
+        style={[
+          styles.header,
+          {
+            backgroundColor: '#ffffff',
+            paddingTop: topInset,
+          },
+        ]}
+      >
+        <View style={styles.topBar}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Alterar endereço de entrega"
+            onPress={() => router.push('../location')}
+            style={styles.addressButton}
+          >
+            <Feather name="map-pin" size={27} color={colors.brandYellow} />
+            <View style={styles.addressText}>
+              <Text style={styles.deliverLabel}>Entregar em</Text>
+              <View style={styles.addressLine}>
+                <Text style={styles.addressTitle}>{deliveryAddress}</Text>
+                <Feather name="chevron-down" size={19} color="#1a1a1a" />
+              </View>
+            </View>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Abrir notificações"
+            onPress={() =>
+              Alert.alert('Notificações', 'Você não tem novas notificações.')
+            }
+            style={styles.headerActionButton}
+          >
+            <Feather name="bell" size={24} color="#1a1a1a" />
+            <View style={styles.notificationDot} />
+          </Pressable>
+        </View>
+
+        <View style={styles.searchBar}>
+          <Feather name="search" size={22} color="#263238" />
+          <TextInput
+            accessibilityLabel="Buscar restaurantes"
+            placeholder="Busque por hambúrguer, pizza, bebidas..."
+            placeholderTextColor="#7b858c"
+            value={search}
+            onChangeText={setSearch}
+            returnKeyType="search"
+            style={styles.searchInput}
+          />
+          {search.length > 0 ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Limpar busca"
+              onPress={() => setSearch('')}
+              hitSlop={10}
+            >
+              <Feather name="x-circle" size={19} color="#68747b" />
+            </Pressable>
+          ) : null}
+        </View>
+      </View>
+
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        <View
-          style={[
-            styles.header,
-            {
-              backgroundColor: '#ffffff',
-              paddingTop: topInset,
-            },
-          ]}
-        >
-          <View style={styles.topBar}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Alterar endereço de entrega"
-              onPress={() => router.push('../location')}
-              style={styles.addressButton}
-            >
-              <Feather name="map-pin" size={27} color={colors.brandYellow} />
-              <View style={styles.addressText}>
-                <Text style={styles.deliverLabel}>Entregar em</Text>
-                <View style={styles.addressLine}>
-                  <Text style={styles.addressTitle}>{deliveryAddress}</Text>
-                  <Feather name="chevron-down" size={19} color="#1a1a1a" />
-                </View>
-              </View>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Abrir notificações"
-              onPress={() =>
-                Alert.alert('Notificações', 'Você não tem novas notificações.')
-              }
-              style={styles.headerActionButton}
-            >
-              <Feather name="bell" size={24} color="#1a1a1a" />
-              <View style={styles.notificationDot} />
-            </Pressable>
-          </View>
-
-          <View style={styles.searchBar}>
-            <Feather name="search" size={22} color="#263238" />
-            <TextInput
-              accessibilityLabel="Buscar restaurantes"
-              placeholder="Busque por hambúrguer, pizza, bebidas..."
-              placeholderTextColor="#7b858c"
-              value={search}
-              onChangeText={setSearch}
-              returnKeyType="search"
-              style={styles.searchInput}
-            />
-            {search.length > 0 ? (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Limpar busca"
-                onPress={() => setSearch('')}
-                hitSlop={10}
-              >
-                <Feather name="x-circle" size={19} color="#68747b" />
-              </Pressable>
-            ) : null}
-          </View>
-        </View>
-
         <View style={styles.content}>
           <View style={styles.categoriesRow}>
             {categories.map((category) => (
@@ -565,6 +569,7 @@ export default function HomeScreen() {
                           : restaurant.image
                       }
                       compact={title === 'Lojas'}
+                      showFavorite={title !== 'Perto de você'}
                       favorite={favoriteNames.includes(restaurant.name)}
                       onToggleFavorite={() => toggleFavorite(restaurant.name)}
                     />

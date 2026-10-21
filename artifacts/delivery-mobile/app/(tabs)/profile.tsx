@@ -49,7 +49,6 @@ export default function ProfileScreen() {
             },
           ]}
         >
-          <Text style={styles.pageTitle}>Perfil</Text>
         </View>
 
         <View style={styles.content}>
@@ -121,12 +120,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderBottomLeftRadius: 42,
     borderBottomRightRadius: 42,
-  },
-  pageTitle: {
-    color: '#ffffff',
-    fontSize: 30,
-    lineHeight: 38,
-    fontWeight: '800',
   },
   profileIdentity: {
     minHeight: 72,

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React from 'react';
 import { Feather } from '@expo/vector-icons';
 import {
   Alert,
@@ -11,8 +11,6 @@ import {
 } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 
-type OrderFilter = 'Todos' | 'Em andamento' | 'Entregues';
-
 type Order = {
   id: string;
   restaurant: string;
@@ -21,8 +19,6 @@ type Order = {
   amount: number;
   logo: number;
 };
-
-const filters: OrderFilter[] = ['Todos', 'Em andamento', 'Entregues'];
 
 const orders: Order[] = [
   {
@@ -64,17 +60,6 @@ const formatPrice = (value: number) =>
 
 export default function OrdersScreen() {
   const colors = useColors();
-  const [activeFilter, setActiveFilter] = useState<OrderFilter>('Todos');
-
-  const visibleOrders = useMemo(
-    () =>
-      orders.filter((order) => {
-        if (activeFilter === 'Em andamento') return order.status === 'Em andamento';
-        if (activeFilter === 'Entregues') return order.status === 'Entregue';
-        return true;
-      }),
-    [activeFilter],
-  );
 
   const showOrderDetails = (order: Order) => {
     Alert.alert(
@@ -90,39 +75,9 @@ export default function OrdersScreen() {
         contentContainerStyle={styles.contentInner}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.filterRow}>
-          {filters.map((filter) => {
-            const selected = activeFilter === filter;
-            return (
-              <Pressable
-                key={filter}
-                accessibilityRole="button"
-                accessibilityState={{ selected }}
-                onPress={() => setActiveFilter(filter)}
-                style={[
-                  styles.filterButton,
-                  {
-                    backgroundColor: selected ? colors.brandGreen : colors.card,
-                    borderColor: selected ? colors.brandGreen : colors.border,
-                  },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.filterText,
-                    { color: selected ? '#ffffff' : colors.foreground },
-                  ]}
-                >
-                  {filter}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-
-        {visibleOrders.length > 0 ? (
+        {orders.length > 0 ? (
           <View style={styles.orderList}>
-            {visibleOrders.map((order) => (
+            {orders.map((order) => (
               <Pressable
                 key={order.id}
                 accessibilityRole="button"
@@ -179,10 +134,10 @@ export default function OrdersScreen() {
           <View style={styles.emptyState}>
             <Feather name="clipboard" size={32} color={colors.brandGreen} />
             <Text style={[styles.emptyTitle, { color: colors.foreground }]}>
-              Nenhum pedido em andamento
+              Nenhum pedido encontrado
             </Text>
             <Text style={[styles.emptyDescription, { color: colors.brandMutedGreen }]}>
-              Seus pedidos ativos aparecerão aqui.
+              Seus pedidos aparecerão aqui.
             </Text>
           </View>
         )}
@@ -206,21 +161,6 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 105,
   },
-  filterRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 13,
-  },
-  filterButton: {
-    flex: 1,
-    minHeight: 36,
-    paddingHorizontal: 7,
-    borderWidth: 1,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  filterText: { fontSize: 11, fontWeight: '600' },
   orderList: { gap: 9 },
   orderCard: {
     minHeight: 98,
