@@ -11,13 +11,13 @@ import {
   View,
 } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { restaurants, type Restaurant } from '@/constants/restaurants';
 import { getDeliveryAddress } from '@/constants/delivery-address';
+import { useFavorites } from '@/contexts/FavoritesContext';
 
 type Category = {
   name: string;
@@ -74,12 +74,7 @@ function CategoryButton({
       onPress={onPress}
       style={styles.categoryItem}
     >
-      <View
-        style={[
-          styles.categoryIcon,
-          category.name === 'Lanches' ? styles.categoryIconSelected : null,
-        ]}
-      >
+      <View style={styles.categoryIcon}>
         {category.image ? (
           <Image source={category.image} style={styles.categoryImage} resizeMode="cover" />
         ) : (
@@ -257,6 +252,7 @@ function RestaurantCard({
   displayImage,
   compact = false,
   showFavorite = true,
+  showCouponBadge = false,
   favorite,
   onToggleFavorite,
 }: {
@@ -264,6 +260,7 @@ function RestaurantCard({
   displayImage?: number;
   compact?: boolean;
   showFavorite?: boolean;
+  showCouponBadge?: boolean;
   favorite: boolean;
   onToggleFavorite: () => void;
 }) {
@@ -309,6 +306,15 @@ function RestaurantCard({
             </Text>
           </Pressable>
         )}
+        {showCouponBadge ? (
+          <View
+            accessibilityLabel="Cupom de R$ 10"
+            style={[styles.storeCouponBadge, { backgroundColor: colors.brandGreen }]}
+          >
+            <MaterialCommunityIcons name="ticket-percent-outline" size={10} color="#ffffff" />
+            <Text style={styles.storeCouponBadgeText}>Cupom de R$ 10</Text>
+          </View>
+        ) : null}
         {showFavorite ? (
           <Pressable
             accessibilityRole="button"
@@ -318,7 +324,11 @@ function RestaurantCard({
             hitSlop={8}
             style={styles.favoriteButton}
           >
-            <Feather name="heart" size={17} color={favorite ? '#ed2635' : '#ffffff'} />
+            <MaterialCommunityIcons
+              name={favorite ? 'heart' : 'heart-outline'}
+              size={18}
+              color={favorite ? '#e53935' : '#ffffff'}
+            />
           </Pressable>
         ) : null}
       </View>
@@ -335,7 +345,7 @@ function RestaurantCard({
           <MaterialCommunityIcons name="star" size={12} color={colors.brandYellow} />
           <Text style={[styles.rating, { color: colors.foreground }]}>{restaurant.rating}</Text>
           <Feather name="clock" size={12} color={colors.brandMutedGreen} />
-          <Text numberOfLines={1} style={styles.deliveryTime}>
+          <Text numberOfLines={1} style={[styles.deliveryTime, { color: colors.mutedForeground }]}>
             {restaurant.delivery}
           </Text>
         </View>
@@ -359,7 +369,8 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [search, setSearch] = useState('');
-  const [favoriteNames, setFavoriteNames] = useState<string[]>([]);
+  const { favoriteNames, toggleFavorite } = useFavorites();
+  const [activeBanner, setActiveBanner] = useState(0);
   const [deliveryAddress, setDeliveryAddressState] = useState(
     getDeliveryAddress,
   );
@@ -367,6 +378,11 @@ export default function HomeScreen() {
   useFocusEffect(
     useCallback(() => {
       setDeliveryAddressState(getDeliveryAddress());
+      const bannerInterval = setInterval(() => {
+        setActiveBanner((current) => (current === 0 ? 1 : 0));
+      }, 5000);
+
+      return () => clearInterval(bannerInterval);
     }, []),
   );
 
@@ -383,14 +399,6 @@ export default function HomeScreen() {
 
   const topInset = Platform.OS === 'web' ? 32 : insets.top;
   const featuredRestaurants = visibleRestaurants.slice(0, 3);
-
-  const toggleFavorite = (name: string) => {
-    setFavoriteNames((current) =>
-      current.includes(name)
-        ? current.filter((favorite) => favorite !== name)
-        : [...current, name],
-    );
-  };
 
   const openRestaurant = (restaurant: Restaurant) =>
     router.push({
@@ -422,7 +430,7 @@ export default function HomeScreen() {
             onPress={() => router.push('../location')}
             style={styles.addressButton}
           >
-            <Feather name="map-pin" size={27} color={colors.brandYellow} />
+            <Feather name="map-pin" size={27} color={colors.brandGreen} />
             <View style={styles.addressText}>
               <Text style={styles.deliverLabel}>Entregar em</Text>
               <View style={styles.addressLine}>
@@ -434,9 +442,7 @@ export default function HomeScreen() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Abrir notificações"
-            onPress={() =>
-              Alert.alert('Notificações', 'Você não tem novas notificações.')
-            }
+            onPress={() => router.push('/notifications')}
             style={styles.headerActionButton}
           >
             <Feather name="bell" size={24} color="#1a1a1a" />
@@ -491,7 +497,11 @@ export default function HomeScreen() {
 
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Oferta especial de hambúrguer artesanal"
+            accessibilityLabel={
+              activeBanner === 0
+                ? 'Bateu a fome? Peça agora. Faça seu pedido em minutos, sem sair de casa.'
+                : 'Tem sempre algo gostoso esperando. Explore cardápios e descubra o que pedir hoje.'
+            }
             onPress={() => restaurants[0] && openRestaurant(restaurants[0])}
             style={({ pressed }) => [
               styles.heroBanner,
@@ -499,41 +509,33 @@ export default function HomeScreen() {
             ]}
           >
             <Image
-              source={require('../../assets/images/promo-hero.jpg')}
+              source={
+                activeBanner === 0
+                  ? require('../../assets/images/fudway-home-banner.png')
+                  : require('../../assets/images/fudway-discover-banner.png')
+              }
               style={styles.heroImage}
-              resizeMode="cover"
+              resizeMode="stretch"
             />
-            <LinearGradient
-              colors={['rgba(10, 15, 11, 0.96)', 'rgba(10, 15, 11, 0.72)', 'rgba(10, 15, 11, 0.02)']}
-              locations={[0, 0.48, 1]}
-              start={{ x: 0, y: 0.5 }}
-              end={{ x: 1, y: 0.5 }}
-              style={StyleSheet.absoluteFill}
-            />
-            <View style={styles.heroCopy}>
-              <View style={styles.heroBadge}>
-                <Feather name="tag" size={11} color="#ffffff" />
-                <Text style={styles.heroBadgeText}>OFERTA ESPECIAL</Text>
-              </View>
-              <Text style={styles.heroTitle}>
-                HAMBÚRGUER{'\n'}
-                <Text style={styles.heroTitleAccent}>ARTESANAL</Text>
-              </Text>
-              <Text style={styles.heroDescription}>
-                Sabor de outro nível,{'\n'}na sua casa.
-              </Text>
-              <View style={styles.heroButton}>
-                <Text style={styles.heroButtonText}>Pedir agora</Text>
-                <Feather name="arrow-right" size={16} color="#073a24" />
-              </View>
-            </View>
-            <View style={styles.heroPagination}>
-              <View style={[styles.heroPageDot, styles.heroPageDotActive]} />
-              <View style={styles.heroPageDot} />
-              <View style={styles.heroPageDot} />
-              <View style={styles.heroPageDot} />
-            </View>
           </Pressable>
+          <View
+            accessibilityLabel={`Banner ${activeBanner + 1} de 2`}
+            accessibilityRole="text"
+            style={styles.heroPagination}
+          >
+            <View
+              style={[
+                styles.heroPageDot,
+                activeBanner === 0 && styles.heroPageDotActive,
+              ]}
+            />
+            <View
+              style={[
+                styles.heroPageDot,
+                activeBanner === 1 && styles.heroPageDotActive,
+              ]}
+            />
+          </View>
 
           {(['Perto de você', 'Lojas'] as const).map((title) => (
             <View key={title} style={styles.featuredSection}>
@@ -551,10 +553,7 @@ export default function HomeScreen() {
                   }
                   style={styles.seeAllButton}
                 >
-                  <Text style={[styles.seeAllText, { color: colors.brandGreen }]}>
-                    Ver tudo
-                  </Text>
-                  <Feather name="arrow-right" size={16} color={colors.brandGreen} />
+                  <Feather name="chevron-right" size={20} color={colors.brandGreen} />
                 </Pressable>
               </View>
               {featuredRestaurants.length > 0 ? (
@@ -570,6 +569,7 @@ export default function HomeScreen() {
                       }
                       compact={title === 'Lojas'}
                       showFavorite={title !== 'Perto de você'}
+                      showCouponBadge={title === 'Lojas'}
                       favorite={favoriteNames.includes(restaurant.name)}
                       onToggleFavorite={() => toggleFavorite(restaurant.name)}
                     />
@@ -578,7 +578,7 @@ export default function HomeScreen() {
               ) : (
                 <View style={[styles.noResults, { backgroundColor: colors.card }]}>
                   <Feather name="search" size={22} color={colors.brandMutedGreen} />
-                  <Text style={[styles.noResultsText, { color: colors.brandMutedGreen }]}>
+                  <Text style={[styles.noResultsText, { color: colors.mutedForeground }]}>
                     Nenhuma loja encontrada.
                   </Text>
                 </View>
@@ -628,7 +628,7 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#ed2635',
+    backgroundColor: '#0b5735',
     borderWidth: 1,
     borderColor: '#ffffff',
   },
@@ -661,11 +661,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#edf0f2',
   },
-  categoryIconSelected: { borderColor: '#54d69a', borderWidth: 1.5, backgroundColor: '#e8f8ef' },
   categoryImage: { width: '100%', height: '100%', borderRadius: 10 },
   categoryLabel: { fontSize: 10.5, fontWeight: '600', textAlign: 'center' },
   heroBanner: {
-    height: 184,
+    width: '100%',
+    aspectRatio: 1365 / 768,
     overflow: 'hidden',
     borderRadius: 18,
     backgroundColor: '#172216',
@@ -676,60 +676,16 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  heroCopy: {
-    position: 'absolute',
-    left: 13,
-    top: 11,
-    alignItems: 'flex-start',
-  },
-  heroBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    borderRadius: 12,
-    backgroundColor: '#07864a',
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-    marginBottom: 8,
-  },
-  heroBadgeText: { color: '#ffffff', fontSize: 9, fontWeight: '800' },
-  heroTitle: {
-    color: '#ffffff',
-    fontSize: 23,
-    lineHeight: 24,
-    letterSpacing: -0.45,
-    fontWeight: '900',
-  },
-  heroTitleAccent: { color: '#53d78d' },
-  heroDescription: {
-    color: '#ffffff',
-    fontSize: 10,
-    lineHeight: 13,
-    marginTop: 4,
-  },
-  heroButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    minHeight: 30,
-    borderRadius: 18,
-    backgroundColor: '#53d78d',
-    paddingHorizontal: 13,
-    marginTop: 7,
-  },
-  heroButtonText: { color: '#073a24', fontSize: 11, fontWeight: '700' },
   heroPagination: {
-    position: 'absolute',
-    bottom: 8,
-    left: 0,
-    right: 0,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     gap: 7,
+    marginTop: -10,
+    marginBottom: 19,
   },
-  heroPageDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#ffffff99' },
-  heroPageDotActive: { backgroundColor: '#53d78d', width: 9, height: 9 },
+  heroPageDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#9ca3af' },
+  heroPageDotActive: { backgroundColor: '#0b5735', width: 9, height: 9 },
   featuredSection: { marginHorizontal: 1, marginBottom: 15 },
   sectionHeading: {
     flexDirection: 'row',
@@ -740,7 +696,6 @@ const styles = StyleSheet.create({
   },
   sectionTitle: { fontSize: 20, fontWeight: '800', letterSpacing: -0.5, flexShrink: 1 },
   seeAllButton: { flexDirection: 'row', alignItems: 'center' },
-  seeAllText: { fontSize: 12, fontWeight: '600' },
   restaurantGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -781,11 +736,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'rgba(0,0,0,0.22)',
   },
+  storeCouponBadge: {
+    position: 'absolute',
+    left: 5,
+    top: 5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  storeCouponBadgeText: { color: '#ffffff', fontSize: 7, fontWeight: '700' },
   restaurantInfo: { paddingHorizontal: 7, paddingVertical: 6, gap: 4 },
   restaurantName: { fontSize: 11, fontWeight: '700', flexShrink: 1 },
   restaurantMeta: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   rating: { fontSize: 10, fontWeight: '700', marginRight: 2 },
-  deliveryTime: { color: '#718379', fontSize: 9, flexShrink: 1 },
+  deliveryTime: { fontSize: 9, flexShrink: 1 },
   deliveryMeta: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   deliveryLabel: { fontSize: 9 },
   noResults: {

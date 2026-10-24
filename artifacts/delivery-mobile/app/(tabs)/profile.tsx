@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { useRouter } from 'expo-router';
 
 const profileOptions = [
   { label: 'Dados da conta', icon: 'user' as const },
@@ -25,6 +26,7 @@ const profileOptions = [
 export default function ProfileScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
 
   return (
     <View style={[styles.screen, { backgroundColor: '#ffffff' }]}>
@@ -44,7 +46,7 @@ export default function ProfileScreen() {
             ]}
           >
             <View style={styles.avatar}>
-              <Text style={[styles.avatarInitials, { color: colors.brandDeepGreen }]}>
+              <Text style={[styles.avatarInitials, { color: colors.foreground }]}>
                 KR
               </Text>
             </View>
@@ -59,9 +61,25 @@ export default function ProfileScreen() {
               <Pressable
                 accessibilityRole="button"
                 key={option.label}
-                onPress={() =>
-                  Alert.alert(option.label, 'Esta opção ainda não está conectada.')
-                }
+                onPress={() => {
+                  if (option.label === 'Dados da conta') {
+                    router.push('/(tabs)/account-details');
+                    return;
+                  }
+                  if (option.label === 'Favoritos') {
+                    router.push('/(tabs)/favorites');
+                    return;
+                  }
+                  if (option.label === 'Endereço de entrega') {
+                    router.push({ pathname: '/location', params: { source: 'profile' } });
+                    return;
+                  }
+                  if (option.label === 'Código de entrega') {
+                    router.push('/(tabs)/delivery-code');
+                    return;
+                  }
+                  Alert.alert(option.label, 'Esta opção ainda não está conectada.');
+                }}
                 style={({ pressed }) => [
                   styles.option,
                   { opacity: pressed ? 0.65 : 1 },

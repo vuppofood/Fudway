@@ -122,7 +122,7 @@ function StoreListCard({ restaurant }: { restaurant: Restaurant }) {
         </View>
         <View style={styles.deliveryLabel}>
           <MaterialCommunityIcons name="moped" size={15} color={colors.brandGreen} />
-          <Text style={[styles.freeDeliveryText, { color: colors.brandGreen }]}>
+          <Text style={[styles.freeDeliveryText, { color: colors.foreground }]}>
             {restaurant.freeDelivery
               ? 'Grátis'
               : `R$ ${(restaurant.categoryDeliveryFee ?? 4.9).toFixed(2).replace('.', ',')}`}
@@ -239,14 +239,7 @@ export default function CategoryScreen() {
           <Text style={[styles.categoryHeaderTitle, { color: colors.foreground }]}>
             {categoryName === 'Lanches' ? 'Hambúrguer' : categoryName}
           </Text>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Ordenar por avaliação"
-            onPress={() => toggleFilter('sort')}
-            style={styles.headerFilter}
-          >
-            <Feather name="sliders" size={21} color={colors.foreground} />
-          </Pressable>
+          <View style={styles.headerFilter} />
         </View>
         <View
           style={[
@@ -320,7 +313,7 @@ export default function CategoryScreen() {
                   <Text
                     style={[
                       styles.filterText,
-                      { color: selected ? colors.brandGreen : colors.foreground },
+                      { color: colors.foreground },
                     ]}
                   >
                     {filter.label}
@@ -391,7 +384,7 @@ export default function CategoryScreen() {
                 },
               ]}
             >
-              <Text style={[styles.exploreButtonText, { color: colors.brandDeepGreen }]}>
+              <Text style={[styles.exploreButtonText, { color: colors.foreground }]}>
                 Ver todas as lojas
               </Text>
               <Feather name="arrow-right" size={17} color={colors.brandDeepGreen} />
@@ -416,7 +409,7 @@ export default function CategoryScreen() {
           style={styles.bottomTab}
         >
           <Feather name="home" size={22} color={colors.brandGreen} />
-          <Text style={[styles.bottomTabLabel, { color: colors.brandGreen }]}>Início</Text>
+          <Text style={[styles.bottomTabLabel, { color: colors.foreground }]}>Início</Text>
         </Pressable>
         <Pressable
           accessibilityRole="button"

@@ -13,8 +13,8 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: colors.brandGreen,
-        tabBarInactiveTintColor: colors.brandMutedGreen,
+        tabBarActiveTintColor: colors.foreground,
+        tabBarInactiveTintColor: colors.mutedForeground,
         headerShown: false,
         tabBarLabelStyle: {
           fontSize: 12,
@@ -62,6 +62,28 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => (
             <Feather name="user" size={23} color={color} />
           ),
+        }}
+      />
+      <Tabs.Screen
+        name="favorites"
+        options={{
+          href: null,
+          headerShown: false,
+        }}
+      />
+      <Tabs.Screen
+        name="account-details"
+        options={{
+          href: null,
+          headerShown: false,
+        }}
+      />
+      <Tabs.Screen
+        name="delivery-code"
+        options={{
+          href: null,
+          headerShown: false,
+          tabBarStyle: { display: 'none' },
         }}
       />
     </Tabs>

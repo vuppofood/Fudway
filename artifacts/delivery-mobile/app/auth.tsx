@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
   },
   createAccountLabel: {
-    color: BRAND_GREEN,
+    color: '#242424',
     fontSize: 17,
     fontWeight: '600',
   },

@@ -8,6 +8,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Feather } from '@expo/vector-icons';
 import colors from '@/constants/colors';
 import { CartProvider } from '@/contexts/CartContext';
+import { FavoritesProvider } from '@/contexts/FavoritesContext';
 import { StatusBar } from 'expo-status-bar';
 import {
   Inter_400Regular,
@@ -36,7 +37,16 @@ function RootLayoutNav() {
     pathname === '/' ||
     pathname.endsWith('/index') ||
     pathname.endsWith('/(tabs)');
+  const isLocationScreen = pathname.endsWith('/location');
+  const isNotificationsScreen = pathname.endsWith('/notifications');
   const isProfileScreen = pathname.endsWith('/profile');
+  const isFavoritesScreen = pathname.endsWith('/favorites');
+  const isAccountDetailsScreen = pathname.endsWith('/account-details');
+  const isDeliveryCodeScreen = pathname.endsWith('/delivery-code');
+  const isOrdersScreen = pathname.endsWith('/orders');
+  const isOrderDetailsScreen = pathname.endsWith('/order-details');
+  const isOrderHelpScreen = pathname.endsWith('/order-help');
+  const isOrderChatScreen = pathname.endsWith('/order-chat');
   const isStoreScreen = pathname.endsWith('/store');
   const isProductScreen = pathname.endsWith('/product');
   const isCategoryScreen = pathname.endsWith('/category');
@@ -50,7 +60,16 @@ function RootLayoutNav() {
           !(
             isAuthenticationScreen ||
             isHomeScreen ||
+            isLocationScreen ||
+            isNotificationsScreen ||
             isProfileScreen ||
+            isFavoritesScreen ||
+            isAccountDetailsScreen ||
+            isDeliveryCodeScreen ||
+            isOrdersScreen ||
+            isOrderDetailsScreen ||
+            isOrderHelpScreen ||
+            isOrderChatScreen ||
             isStoreScreen ||
             isProductScreen ||
             isCategoryScreen ||
@@ -68,6 +87,7 @@ function RootLayoutNav() {
       >
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="notifications" options={{ headerShown: false }} />
         <Stack.Screen name="auth" options={{ headerShown: false }} />
         <Stack.Screen name="login" options={{ headerShown: false }} />
         <Stack.Screen name="reset-password" options={{ headerShown: false }} />
@@ -78,6 +98,9 @@ function RootLayoutNav() {
         <Stack.Screen name="category" options={{ headerShown: false }} />
         <Stack.Screen name="product" options={{ headerShown: false }} />
         <Stack.Screen name="checkout" options={{ headerShown: false }} />
+        <Stack.Screen name="order-details" options={{ headerShown: false }} />
+        <Stack.Screen name="order-help" options={{ headerShown: false }} />
+        <Stack.Screen name="order-chat" options={{ headerShown: false }} />
       </Stack>
     </>
   );
@@ -148,13 +171,15 @@ export default function RootLayout() {
       <ErrorBoundary>
         <QueryClientProvider client={queryClient}>
           <CartProvider>
-            <GestureHandlerRootView
-              style={{ flex: 1, backgroundColor: colors.light.brandDeepGreen }}
-            >
-              <KeyboardProvider>
-                <RootLayoutNav />
-              </KeyboardProvider>
-            </GestureHandlerRootView>
+            <FavoritesProvider>
+              <GestureHandlerRootView
+                style={{ flex: 1, backgroundColor: colors.light.brandDeepGreen }}
+              >
+                <KeyboardProvider>
+                  <RootLayoutNav />
+                </KeyboardProvider>
+              </GestureHandlerRootView>
+            </FavoritesProvider>
           </CartProvider>
         </QueryClientProvider>
       </ErrorBoundary>

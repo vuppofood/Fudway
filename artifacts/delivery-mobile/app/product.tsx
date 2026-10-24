@@ -35,6 +35,8 @@ export default function ProductScreen() {
     name?: string;
     description?: string;
     price?: string;
+    originalPrice?: string;
+    discountPercent?: string;
     image?: string;
     category?: string;
     storeName?: string;
@@ -47,6 +49,8 @@ export default function ProductScreen() {
     params.description ||
     'Pão brioche, hambúrguer 180g, queijo cheddar, alface, tomate e molho especial.';
   const basePrice = Number(params.price) || 24.9;
+  const originalBasePrice = Number(params.originalPrice) || basePrice;
+  const discountPercent = Number(params.discountPercent) || 0;
   const imageSource = Number(params.image) || require('../assets/images/reference/buncker-classico.jpg');
   const category = params.category || 'Hambúrgueres';
   const storeName = params.storeName || 'Buncker';
@@ -73,6 +77,7 @@ export default function ProductScreen() {
     .filter((extra) => selectedExtras.includes(extra.id))
     .reduce((sum, extra) => sum + extra.price, 0);
   const unitPrice = selectedBasePrice + extrasTotal;
+  const originalUnitPrice = originalBasePrice + extrasTotal;
   const totalPrice = unitPrice * quantity;
 
   const toggleExtra = (id: string) => {
@@ -145,9 +150,23 @@ export default function ProductScreen() {
 
         <View style={styles.details}>
           <Text style={[styles.productName, { color: colors.foreground }]}>{name}</Text>
-          <Text style={[styles.price, { color: colors.foreground }]}>
-            {formatPrice(unitPrice)}
-          </Text>
+          <View style={styles.priceColumn}>
+            <Text style={[styles.price, { color: '#000000' }]}>
+              {formatPrice(unitPrice)}
+            </Text>
+            {discountPercent > 0 ? (
+              <View style={styles.discountDetails}>
+                <Text style={[styles.originalPrice, { color: '#000000' }]}>
+                  {formatPrice(originalUnitPrice)}
+                </Text>
+                <View style={[styles.productDiscountBadge, { backgroundColor: colors.brandGreen }]}>
+                  <Text style={[styles.productDiscountText, { color: '#ffffff' }]}>
+                    {discountPercent}% OFF
+                  </Text>
+                </View>
+              </View>
+            ) : null}
+          </View>
           <Text style={[styles.description, { color: colors.mutedForeground }]}>
             {description}
           </Text>
@@ -193,7 +212,7 @@ export default function ProductScreen() {
                       <Text
                         style={[
                           styles.sizeText,
-                          { color: selected ? colors.brandTomato : colors.foreground },
+                          { color: colors.foreground },
                         ]}
                       >
                         {option.label}
@@ -201,7 +220,7 @@ export default function ProductScreen() {
                       <Text
                         style={[
                           styles.sizePrice,
-                          { color: selected ? colors.brandTomato : colors.foreground },
+                          { color: colors.foreground },
                         ]}
                       >
                         {formatPrice(option.price)}
@@ -331,7 +350,12 @@ const styles = StyleSheet.create({
   },
   details: { paddingHorizontal: 20, paddingTop: 13, paddingBottom: 14 },
   productName: { fontSize: 22, lineHeight: 28, fontWeight: '800' },
+  priceColumn: { alignItems: 'flex-start' },
   price: { marginTop: 3, fontSize: 22, fontWeight: '800' },
+  discountDetails: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+  originalPrice: { fontSize: 14, textDecorationLine: 'line-through' },
+  productDiscountBadge: { paddingHorizontal: 7, paddingVertical: 4, borderRadius: 6 },
+  productDiscountText: { fontSize: 12, fontWeight: '700' },
   description: { marginTop: 5, fontSize: 13, lineHeight: 19 },
   storeRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 11 },
   storeIcon: {

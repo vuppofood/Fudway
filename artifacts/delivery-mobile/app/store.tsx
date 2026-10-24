@@ -3,29 +3,30 @@ import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
-  Alert,
   Image,
   Platform,
   Pressable,
   ScrollView,
-  Share,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCart } from '@/contexts/CartContext';
+import { useFavorites } from '@/contexts/FavoritesContext';
 import { useColors } from '@/hooks/useColors';
 
 type StoreCategory = 'Hambúrgueres' | 'Combos' | 'Porções' | 'Bebidas' | 'Sobremesas';
 type MenuFilter = 'Todos' | StoreCategory;
 type StoreTab = 'Cardápio' | 'Avaliações' | 'Sobre';
+type ReviewFilter = 'Mais recentes' | 'Melhores' | 'Piores';
 
 type MenuItem = {
   id: string;
   name: string;
   description: string;
   price: number;
+  discountPercent?: number;
   category: StoreCategory;
   image: number;
 };
@@ -37,6 +38,12 @@ const categories: MenuFilter[] = [
   'Porções',
   'Bebidas',
   'Sobremesas',
+];
+
+const storeCoupons = [
+  { offer: 'R$ 10 OFF', details: 'Em pedidos acima\nde R$ 30' },
+  { offer: '15% OFF', details: 'Em pedidos acima\nde R$ 40' },
+  { offer: 'R$ 15 OFF', details: 'Para novos clientes' },
 ];
 
 const subwayMenu: MenuItem[] = [
@@ -69,6 +76,7 @@ const subwayMenu: MenuItem[] = [
     name: 'Combo Clássico',
     description: 'Hambúrguer + batata média + refrigerante 350ml',
     price: 32.9,
+    discountPercent: 15,
     category: 'Combos',
     image: require('../assets/images/reference/combo-classico.jpg'),
   },
@@ -77,6 +85,7 @@ const subwayMenu: MenuItem[] = [
     name: 'Combo Bacon',
     description: 'Hambúrguer + batata média + refrigerante 350ml',
     price: 29.9,
+    discountPercent: 15,
     category: 'Combos',
     image: require('../assets/images/reference/combo-bacon.jpg'),
   },
@@ -93,6 +102,7 @@ const subwayMenu: MenuItem[] = [
     name: 'Batata crocante',
     description: 'Porção de batatas douradas com molho da casa.',
     price: 12.9,
+    discountPercent: 15,
     category: 'Porções',
     image: require('../assets/images/cart-potatoes.png'),
   },
@@ -154,6 +164,7 @@ const otherMenus: Record<string, MenuItem[]> = {
       name: 'Combo Clássico',
       description: 'Burger clássico, batata média e refrigerante 350ml.',
       price: 32.9,
+      discountPercent: 15,
       category: 'Combos',
       image: require('../assets/images/restaurant-burger.jpg'),
     },
@@ -162,6 +173,7 @@ const otherMenus: Record<string, MenuItem[]> = {
       name: 'Combo Bacon',
       description: 'Burger bacon, batata média e refrigerante 350ml.',
       price: 37.9,
+      discountPercent: 15,
       category: 'Combos',
       image: require('../assets/images/restaurant-burger.jpg'),
     },
@@ -230,6 +242,7 @@ const otherMenus: Record<string, MenuItem[]> = {
       name: 'Combo Clássico',
       description: 'Sanduíche da casa acompanhado de bebida.',
       price: 32.9,
+      discountPercent: 15,
       category: 'Combos',
       image: require('../assets/images/menu-subway-classic.png'),
     },
@@ -238,6 +251,7 @@ const otherMenus: Record<string, MenuItem[]> = {
       name: 'Combo Burger',
       description: 'Burger especial com batata e bebida.',
       price: 39.9,
+      discountPercent: 15,
       category: 'Combos',
       image: require('../assets/images/restaurant-burger.jpg'),
     },
@@ -261,19 +275,48 @@ const otherMenus: Record<string, MenuItem[]> = {
 };
 
 const reviews = [
-  { name: 'Mariana A.', text: 'Sanduíche fresquinho e muito bem montado.', rating: '5.0' },
-  { name: 'Lucas R.', text: 'Entrega rápida e atendimento ótimo.', rating: '4.8' },
-  { name: 'Camila S.', text: 'Tudo chegou certinho. Pedi de novo!', rating: '5.0' },
+  {
+    name: 'Mariana A.',
+    date: 'há 3 dias',
+    text: 'Sanduíche fresquinho e muito bem montado.',
+    rating: 5,
+  },
+  {
+    name: 'Lucas R.',
+    date: 'há 5 dias',
+    text: 'Entrega rápida e atendimento ótimo.',
+    rating: 4.8,
+    response: 'Obrigado pela preferência! Esperamos seu próximo pedido.',
+  },
+  {
+    name: 'Camila S.',
+    date: 'há 1 semana',
+    text: 'Tudo chegou certinho. Pedi de novo!',
+    rating: 5,
+  },
+  {
+    name: 'Felipe M.',
+    date: 'há 1 semana',
+    text: 'O lanche é muito bom, mas a entrega demorou um pouco.',
+    rating: 4,
+    response: 'Olá, sentimos muito pelo atraso. Já estamos ajustando para melhorar ainda mais o nosso atendimento!',
+  },
 ];
 
 const formatPrice = (value: number) =>
   value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+const getDiscountedPrice = (item: MenuItem) =>
+  item.discountPercent
+    ? Math.round(item.price * (100 - item.discountPercent)) / 100
+    : item.price;
 
 export default function StoreScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { itemCount, subtotal: cartTotal } = useCart();
+  const { isFavorite, toggleFavorite } = useFavorites();
   const params = useLocalSearchParams<{
     name?: string;
     cuisine?: string;
@@ -294,6 +337,8 @@ export default function StoreScreen() {
       : require('../assets/images/promo-hero.jpg');
   const [activeTab, setActiveTab] = useState<StoreTab>('Cardápio');
   const [activeCategory, setActiveCategory] = useState<MenuFilter>('Todos');
+  const [reviewFilter, setReviewFilter] = useState<ReviewFilter>('Mais recentes');
+  const storeIsFavorite = isFavorite(storeName);
   const menuSections = useMemo(
     () =>
       categories
@@ -306,6 +351,15 @@ export default function StoreScreen() {
         .filter((section) => section.items.length > 0),
     [activeCategory, menu],
   );
+  const visibleReviews = useMemo(() => {
+    if (reviewFilter === 'Melhores') {
+      return [...reviews].sort((first, second) => second.rating - first.rating);
+    }
+    if (reviewFilter === 'Piores') {
+      return [...reviews].sort((first, second) => first.rating - second.rating);
+    }
+    return reviews;
+  }, [reviewFilter]);
   const openProduct = (item: MenuItem) =>
     router.push({
       pathname: '/product',
@@ -313,21 +367,15 @@ export default function StoreScreen() {
         id: item.id,
         name: item.name,
         description: item.description,
-        price: String(item.price),
+        price: String(getDiscountedPrice(item)),
+        originalPrice: item.discountPercent ? String(item.price) : undefined,
+        discountPercent: item.discountPercent ? String(item.discountPercent) : undefined,
         image: String(item.image),
         category: item.category,
         storeName,
         cuisine,
       },
     });
-  const shareStore = async () => {
-    try {
-      await Share.share({ message: `Confira ${storeName} no app de delivery.` });
-    } catch {
-      Alert.alert(storeName, 'Compartilhe esta loja com seus amigos.');
-    }
-  };
-
   return (
     <View style={[styles.screen, { backgroundColor: colors.card }]}>
       <ScrollView
@@ -362,19 +410,16 @@ export default function StoreScreen() {
             <View style={styles.heroActions}>
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Buscar no cardápio"
-                onPress={() => Alert.alert('Buscar no cardápio', 'Use as categorias para encontrar seus favoritos.')}
+                accessibilityLabel={storeIsFavorite ? `Remover ${storeName} dos favoritos` : `Favoritar ${storeName}`}
+                accessibilityState={{ selected: storeIsFavorite }}
+                onPress={() => toggleFavorite(storeName)}
                 style={styles.heroButton}
               >
-                <Feather name="search" size={19} color="#ffffff" />
-              </Pressable>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Compartilhar loja"
-                onPress={shareStore}
-                style={styles.heroButton}
-              >
-                <Feather name="more-vertical" size={19} color="#ffffff" />
+                <MaterialCommunityIcons
+                  name={storeIsFavorite ? 'heart' : 'heart-outline'}
+                  size={22}
+                  color={storeIsFavorite ? '#e53935' : '#ffffff'}
+                />
               </Pressable>
             </View>
           </View>
@@ -389,7 +434,7 @@ export default function StoreScreen() {
               <View style={[styles.brandUnderline, { backgroundColor: colors.brandYellow }]} />
             </View>
             <View style={styles.storeCategoryPill}>
-              <Text style={styles.storeCategoryText}>{cuisine}</Text>
+              <Text style={styles.storeCategoryText}>{storeName}</Text>
             </View>
             <View style={styles.heroMeta}>
               <MaterialCommunityIcons name="star" size={14} color={colors.brandYellow} />
@@ -459,6 +504,32 @@ export default function StoreScreen() {
                 })}
               </ScrollView>
 
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.couponRow}
+              >
+                {storeCoupons.map((coupon) => (
+                  <View
+                    key={coupon.offer}
+                    accessibilityLabel={`${coupon.offer}. ${coupon.details.replace('\n', ' ')}`}
+                    style={[styles.couponCard, { backgroundColor: colors.brandGreen }]}
+                  >
+                    <View style={styles.couponIconSection}>
+                      <MaterialCommunityIcons
+                        name="ticket-percent-outline"
+                        size={24}
+                        color="#ffffff"
+                      />
+                    </View>
+                    <View style={styles.couponCopy}>
+                      <Text style={styles.couponOffer}>{coupon.offer}</Text>
+                      <Text style={styles.couponDescription}>{coupon.details}</Text>
+                    </View>
+                  </View>
+                ))}
+              </ScrollView>
+
               <View style={styles.menuContent}>
                 {menuSections.length > 0 ? menuSections.map((section) => (
                   <View
@@ -502,9 +573,27 @@ export default function StoreScreen() {
                                 {item.name}
                               </Text>
                             </Pressable>
-                            <Text style={[styles.menuPrice, { color: colors.foreground }]}>
-                              {formatPrice(item.price)}
-                            </Text>
+                            {item.discountPercent ? (
+                              <View style={styles.discountPrices}>
+                                <Text style={[styles.menuPrice, { color: '#000000' }]}>
+                                  {formatPrice(getDiscountedPrice(item))}
+                                </Text>
+                                <View style={styles.discountDetails}>
+                                  <Text style={[styles.originalMenuPrice, { color: '#000000' }]}>
+                                    {formatPrice(item.price)}
+                                  </Text>
+                                  <View style={[styles.menuDiscountBadge, { backgroundColor: colors.brandGreen }]}>
+                                    <Text style={[styles.menuDiscountText, { color: '#ffffff' }]}>
+                                      {item.discountPercent}% OFF
+                                    </Text>
+                                  </View>
+                                </View>
+                              </View>
+                            ) : (
+                              <Text style={[styles.menuPrice, { color: colors.foreground }]}>
+                                {formatPrice(item.price)}
+                              </Text>
+                            )}
                           </View>
                         </View>
                       ))}
@@ -521,45 +610,134 @@ export default function StoreScreen() {
             </>
           ) : activeTab === 'Avaliações' ? (
             <View style={styles.reviewsList}>
-              {reviews.map((review) => (
+              <View style={[styles.ratingSummary, { borderColor: colors.border, backgroundColor: colors.card }]}>
+                <View style={styles.ratingSummaryHeader}>
+                  <Text style={[styles.averageRating, { color: colors.foreground }]}>
+                    {rating.replace('.', ',')}
+                  </Text>
+                  <View style={styles.ratingSummaryDetails}>
+                    <View style={styles.ratingStars}>
+                      {[0, 1, 2, 3, 4].map((star) => (
+                        <MaterialCommunityIcons
+                          key={star}
+                          name={star === 4 ? 'star-half-full' : 'star'}
+                          size={22}
+                          color={colors.brandYellow}
+                        />
+                      ))}
+                    </View>
+                    <Text style={[styles.reviewCount, { color: colors.mutedForeground }]}>
+                      2,4 mil avaliações
+                    </Text>
+                  </View>
+                </View>
+                {[
+                  { label: '5 estrelas', percent: 78 },
+                  { label: '4 estrelas', percent: 15 },
+                  { label: '3 estrelas', percent: 4 },
+                  { label: '2 estrelas', percent: 2 },
+                  { label: '1 estrela', percent: 1 },
+                ].map((row) => (
+                  <View key={row.label} style={styles.ratingBreakdownRow}>
+                    <Text style={[styles.ratingBreakdownLabel, { color: colors.foreground }]}>{row.label}</Text>
+                    <View style={[styles.ratingTrack, { backgroundColor: colors.muted }]}>
+                      <View
+                        style={[
+                          styles.ratingFill,
+                          { width: `${row.percent}%`, backgroundColor: colors.brandYellow },
+                        ]}
+                      />
+                    </View>
+                    <Text style={[styles.ratingPercent, { color: colors.foreground }]}>{row.percent}%</Text>
+                  </View>
+                ))}
+              </View>
+              <View style={styles.reviewFilters}>
+                {(['Mais recentes', 'Melhores', 'Piores'] as ReviewFilter[]).map((filter) => {
+                  const selected = reviewFilter === filter;
+                  return (
+                    <Pressable
+                      key={filter}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected }}
+                      onPress={() => setReviewFilter(filter)}
+                      style={[
+                        styles.reviewFilterChip,
+                        {
+                          backgroundColor: selected ? colors.secondary : colors.card,
+                          borderColor: colors.border,
+                        },
+                      ]}
+                    >
+                      <Text style={[styles.reviewFilterText, { color: colors.foreground }]}>{filter}</Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+              {visibleReviews.map((review) => (
                 <View
                   key={review.name}
                   style={[styles.reviewCard, { backgroundColor: colors.card, borderColor: colors.border }]}
                 >
                   <View style={styles.reviewHeader}>
-                    <Text style={[styles.reviewName, { color: colors.foreground }]}>
-                      {review.name}
-                    </Text>
+                    <Text style={[styles.reviewName, { color: colors.foreground }]}>{review.name}</Text>
                     <View style={styles.reviewScore}>
-                      <Feather name="star" size={12} color={colors.brandYellow} />
+                      <MaterialCommunityIcons name="star" size={15} color={colors.brandYellow} />
                       <Text style={[styles.reviewScoreText, { color: colors.foreground }]}>
-                        {review.rating}
+                        {review.rating.toFixed(1).replace('.', ',')}
                       </Text>
                     </View>
                   </View>
-                  <Text style={[styles.reviewBody, { color: colors.mutedForeground }]}>
-                    {review.text}
-                  </Text>
+                  <Text style={[styles.reviewDate, { color: colors.mutedForeground }]}>{review.date}</Text>
+                  <Text style={[styles.reviewBody, { color: colors.foreground }]}>{review.text}</Text>
+                  {review.response ? (
+                    <View style={[styles.storeResponse, { backgroundColor: colors.secondary }]}>
+                      <Feather name="home" size={16} color={colors.foreground} />
+                      <View style={styles.storeResponseCopy}>
+                        <Text style={[styles.storeResponseTitle, { color: colors.foreground }]}>Resposta da loja</Text>
+                        <Text style={[styles.storeResponseText, { color: colors.mutedForeground }]}>
+                          {review.response}
+                        </Text>
+                      </View>
+                    </View>
+                  ) : null}
                 </View>
               ))}
             </View>
           ) : (
             <View style={styles.aboutSection}>
-              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Sobre a loja</Text>
-              <Text style={[styles.aboutText, { color: colors.mutedForeground }]}>
-                Peça seus favoritos de {cuisine.toLocaleLowerCase('pt-BR')} com entrega em {delivery}.
-              </Text>
-              <View style={styles.aboutMeta}>
-                <Feather name="clock" size={17} color={colors.brandGreen} />
-                <Text style={[styles.aboutText, { color: colors.foreground }]}>
-                  Tempo médio: {delivery}
+              <View style={[styles.aboutCard, { borderColor: colors.border, backgroundColor: colors.card }]}>
+                <Text style={[styles.aboutCardTitle, { color: colors.foreground }]}>Sobre a loja</Text>
+                <Text style={[styles.aboutText, { color: colors.mutedForeground }]}>
+                  Peça seus favoritos de {cuisine.toLocaleLowerCase('pt-BR')} com entrega em {delivery}.
                 </Text>
               </View>
-              <View style={styles.aboutMeta}>
-                <Feather name="star" size={17} color={colors.brandYellow} />
-                <Text style={[styles.aboutText, { color: colors.foreground }]}>
-                  Nota {rating} · 2,4 mil avaliações
+              <View style={[styles.aboutCard, { borderColor: colors.border, backgroundColor: colors.card }]}>
+                <Text style={[styles.aboutCardTitle, { color: colors.foreground }]}>Endereço</Text>
+                <Text style={[styles.aboutText, { color: colors.mutedForeground }]}>
+                  Rua das Flores, 123 - Jardim das Acácias{'\n'}São Paulo - SP, 04567-890
                 </Text>
+              </View>
+              <View style={[styles.aboutCard, { borderColor: colors.border, backgroundColor: colors.card }]}>
+                <Text style={[styles.aboutCardTitle, { color: colors.foreground }]}>Horário de funcionamento</Text>
+                {[
+                  ['Quarta-Feira', '16:00 às 23:45'],
+                  ['Quinta-Feira', '16:00 às 23:45'],
+                  ['Sexta-Feira', '16:00 às 23:59'],
+                  ['Sábado', '00:00 às 00:45 - 16:00 às 23:59'],
+                  ['Domingo', '00:00 às 00:45 - 16:00 às 23:00'],
+                  ['Segunda-Feira', '16:00 às 23:00'],
+                  ['Terça-Feira', '16:00 às 23:45'],
+                ].map(([day, hours]) => (
+                  <View key={day} style={styles.hoursRow}>
+                    <Text style={[styles.aboutText, styles.hoursDay, { color: colors.mutedForeground }]}>{day}</Text>
+                    <Text style={[styles.aboutText, styles.hoursValue, { color: colors.mutedForeground }]}>{hours}</Text>
+                  </View>
+                ))}
+              </View>
+              <View style={[styles.aboutCard, { borderColor: colors.border, backgroundColor: colors.card }]}>
+                <Text style={[styles.aboutCardTitle, { color: colors.foreground }]}>CNPJ</Text>
+                <Text style={[styles.aboutText, { color: colors.mutedForeground }]}>59.425.704/0001-59</Text>
               </View>
             </View>
           )}
@@ -726,6 +904,26 @@ const styles = StyleSheet.create({
     height: 2,
     borderRadius: 2,
   },
+  couponRow: { gap: 8, paddingHorizontal: 12, paddingTop: 2, paddingBottom: 8 },
+  couponCard: {
+    width: 160,
+    minHeight: 60,
+    borderRadius: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  couponIconSection: {
+    width: 50,
+    minHeight: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRightWidth: 1,
+    borderRightColor: 'rgba(255,255,255,0.25)',
+  },
+  couponCopy: { flex: 1, paddingHorizontal: 6, gap: 1 },
+  couponOffer: { color: '#ffffff', fontSize: 12, fontWeight: '800' },
+  couponDescription: { color: '#ffffff', fontSize: 8, lineHeight: 10 },
   menuContent: { paddingHorizontal: 16, paddingTop: 7 },
   menuSection: { marginBottom: 8 },
   lastVisibleMenuSection: { marginBottom: 84 },
@@ -747,6 +945,11 @@ const styles = StyleSheet.create({
   menuImage: { width: '100%', height: '100%' },
   menuCardBody: { paddingHorizontal: 6, paddingVertical: 7, gap: 4 },
   menuName: { fontSize: 10.5, fontWeight: '700' },
+  discountPrices: { alignItems: 'flex-start', gap: 1 },
+  discountDetails: { flexDirection: 'row', alignItems: 'center', gap: 4, flexWrap: 'wrap' },
+  originalMenuPrice: { fontSize: 9, textDecorationLine: 'line-through' },
+  menuDiscountBadge: { paddingHorizontal: 4, paddingVertical: 2, borderRadius: 4 },
+  menuDiscountText: { fontSize: 8, fontWeight: '700' },
   menuPrice: { marginTop: 1, fontSize: 11, fontWeight: '800' },
   emptyMenu: {
     minHeight: 100,
@@ -756,15 +959,38 @@ const styles = StyleSheet.create({
   },
   emptyMenuText: { fontSize: 12 },
   reviewsList: { paddingHorizontal: 14, gap: 9, paddingTop: 13 },
-  reviewCard: { padding: 13, borderWidth: 1, borderRadius: 13, gap: 7 },
+  ratingSummary: { padding: 13, borderWidth: 1, borderRadius: 14, gap: 9 },
+  ratingSummaryHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 1 },
+  averageRating: { fontSize: 52, lineHeight: 58, fontWeight: '900', letterSpacing: -2 },
+  ratingSummaryDetails: { gap: 2 },
+  ratingStars: { flexDirection: 'row', alignItems: 'center', gap: 1 },
+  reviewCount: { fontSize: 11, fontWeight: '500' },
+  ratingBreakdownRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  ratingBreakdownLabel: { width: 68, fontSize: 10 },
+  ratingTrack: { flex: 1, height: 7, borderRadius: 5, overflow: 'hidden' },
+  ratingFill: { height: '100%', borderRadius: 5 },
+  ratingPercent: { width: 30, textAlign: 'right', fontSize: 10 },
+  reviewFilters: { flexDirection: 'row', gap: 8, marginVertical: 1 },
+  reviewFilterChip: { minHeight: 34, paddingHorizontal: 13, borderWidth: 1, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  reviewFilterText: { fontSize: 11, fontWeight: '600' },
+  reviewCard: { padding: 12, borderWidth: 1, borderRadius: 13, gap: 5 },
   reviewHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   reviewName: { fontSize: 12, fontWeight: '700' },
-  reviewScore: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  reviewScoreText: { fontSize: 11, fontWeight: '700' },
-  reviewBody: { fontSize: 11, lineHeight: 16 },
-  aboutSection: { paddingHorizontal: 16, paddingTop: 17, gap: 12 },
-  aboutText: { fontSize: 13, lineHeight: 19 },
-  aboutMeta: { flexDirection: 'row', alignItems: 'center', gap: 9 },
+  reviewDate: { fontSize: 10 },
+  reviewScore: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  reviewScoreText: { fontSize: 10, fontWeight: '700' },
+  reviewBody: { fontSize: 11, lineHeight: 16, marginTop: 2 },
+  storeResponse: { flexDirection: 'row', alignItems: 'flex-start', gap: 9, padding: 10, borderRadius: 10, marginTop: 2 },
+  storeResponseCopy: { flex: 1, gap: 3 },
+  storeResponseTitle: { fontSize: 10, fontWeight: '700' },
+  storeResponseText: { fontSize: 10, lineHeight: 14 },
+  aboutSection: { paddingHorizontal: 14, paddingTop: 13, gap: 10, paddingBottom: 8 },
+  aboutCard: { padding: 13, borderWidth: 1, borderRadius: 14, gap: 6 },
+  aboutCardTitle: { fontSize: 16, fontWeight: '800', letterSpacing: -0.2 },
+  aboutText: { fontSize: 12, lineHeight: 19 },
+  hoursRow: { flexDirection: 'row', gap: 8 },
+  hoursDay: { width: '40%' },
+  hoursValue: { flex: 1 },
   cartBar: {
     position: 'absolute',
     left: 10,
@@ -788,7 +1014,7 @@ const styles = StyleSheet.create({
     borderRadius: 9,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#ed2635',
+    backgroundColor: '#0b5735',
   },
   cartBadgeText: { color: '#ffffff', fontSize: 9, fontWeight: '800' },
   cartSummaryText: { gap: 2 },

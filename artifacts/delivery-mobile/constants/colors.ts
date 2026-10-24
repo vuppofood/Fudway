@@ -15,16 +15,16 @@
 const colors = {
   light: {
     // Legacy aliases (kept for backward compatibility)
-    text: '#103a27',
+    text: '#171c20',
     tint: '#0b5735',
 
     // Core surfaces
     background: '#f5faf7',
-    foreground: '#103a27',
+    foreground: '#171c20',
 
     // Cards / elevated surfaces
     card: '#ffffff',
-    cardForeground: '#103a27',
+    cardForeground: '#171c20',
 
     // Primary action color (buttons, links, active states)
     primary: '#0b5735',
@@ -32,18 +32,18 @@ const colors = {
 
     // Secondary / less-emphasis interactive surfaces
     secondary: '#eaf2ed',
-    secondaryForeground: '#103a27',
+    secondaryForeground: '#171c20',
 
     // Muted / subdued elements (dividers, timestamps, placeholders)
     muted: '#eaf2ed',
-    mutedForeground: '#718379',
+    mutedForeground: '#6b7280',
 
     // Accent highlights (badges, selected items, focus rings)
     accent: '#f7c900',
-    accentForeground: '#103a27',
+    accentForeground: '#171c20',
 
     // Destructive actions (delete, error states)
-    destructive: '#ef4444',
+    destructive: '#0b5735',
     destructiveForeground: '#ffffff',
 
     // Borders and input outlines
@@ -58,7 +58,7 @@ const colors = {
     brandMint: '#e9f3ed',
     brandMutedGreen: '#74877c',
     brandLettuce: '#61aa4b',
-    brandTomato: '#ed1633',
+    brandTomato: '#0b5735',
     brandInk: '#090909',
     brandPatty: '#8a5228',
     brandPaper: '#fbfff9',

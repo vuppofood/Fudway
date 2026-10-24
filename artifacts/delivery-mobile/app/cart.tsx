@@ -160,7 +160,7 @@ export default function CartScreen() {
           style={styles.addMore}
         >
           <Feather name="plus" size={22} color={colors.brandTomato} />
-          <Text style={[styles.addMoreText, { color: colors.brandTomato }]}>
+          <Text style={[styles.addMoreText, { color: colors.foreground }]}>
             Adicionar mais itens
           </Text>
         </Pressable>
@@ -203,7 +203,7 @@ export default function CartScreen() {
             <Text
               style={[
                 styles.couponMessage,
-                { color: couponApplied ? colors.brandGreen : colors.brandTomato },
+                { color: colors.foreground },
               ]}
             >
               {couponMessage}
@@ -282,7 +282,7 @@ function SummaryRow({
       <Text
         style={[
           styles.summaryValue,
-          { color: free ? colors.brandGreen : colors.foreground },
+          { color: colors.foreground },
         ]}
       >
         {value}

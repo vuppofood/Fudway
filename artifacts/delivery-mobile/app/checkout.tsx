@@ -93,7 +93,7 @@ export default function CheckoutScreen() {
             onPress={() => router.push('/location')}
             style={styles.changeAddress}
           >
-            <Text style={[styles.changeAddressText, { color: colors.brandGreen }]}>
+            <Text style={[styles.changeAddressText, { color: colors.foreground }]}>
               Alterar endereço
             </Text>
           </Pressable>
@@ -221,7 +221,7 @@ export default function CheckoutScreen() {
               onPress={() => setPaymentModalOpen(false)}
               style={styles.closeModal}
             >
-              <Text style={[styles.closeModalText, { color: colors.brandGreen }]}>Fechar</Text>
+              <Text style={[styles.closeModalText, { color: colors.foreground }]}>Fechar</Text>
             </Pressable>
           </View>
         </View>

@@ -314,7 +314,7 @@ export default function ResetPasswordScreen() {
                               ? GREEN
                               : passwordStrength.score >= 2
                                 ? '#E4A12B'
-                                : '#D9534F',
+                                : GREEN,
                         },
                       ]}
                     />
@@ -708,7 +708,7 @@ const styles = StyleSheet.create({
     paddingVertical: 22,
   },
   resendLabel: {
-    color: GREEN,
+    color: TEXT,
     fontSize: 15,
     textAlign: 'center',
   },
@@ -770,7 +770,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   requirementMet: {
-    color: GREEN,
+    color: TEXT,
   },
   primaryButton: {
     minHeight: 58,

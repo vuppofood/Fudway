@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
     marginBottom: 26,
   },
   forgotLabel: {
-    color: GREEN,
+    color: TEXT,
     fontSize: 15,
     fontWeight: '500',
   },

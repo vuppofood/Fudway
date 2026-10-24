@@ -410,7 +410,7 @@ export default function SignupScreen() {
                               ? GREEN
                               : passwordStrength.score >= 2
                                 ? '#E4A12B'
-                                : '#D9534F',
+                                : GREEN,
                         },
                       ]}
                     />
@@ -793,7 +793,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   deliveryOptionLabelSelected: {
-    color: GREEN,
+    color: TEXT,
   },
   codeEntry: {
     position: 'relative',
@@ -913,6 +913,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   requirementMet: {
-    color: GREEN,
+    color: TEXT,
   },
 });
