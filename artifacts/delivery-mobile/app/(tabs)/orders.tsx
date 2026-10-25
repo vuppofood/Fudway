@@ -11,7 +11,6 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 
 type OrderStatus = 'Entregue' | 'Em andamento' | 'Cancelado';
@@ -93,12 +92,11 @@ const formatPrice = (value: number) =>
 
 export default function OrdersScreen() {
   const colors = useColors();
-  const insets = useSafeAreaInsets();
   const router = useRouter();
   const [activeFilter, setActiveFilter] = useState<OrderFilter>('Todos');
   const [ratings, setRatings] = useState<Record<string, number>>({});
   const [viewportHeight, setViewportHeight] = useState(0);
-  const topInset = Platform.OS === 'web' ? 32 : insets.top;
+  const topInset = Platform.OS === 'web' ? 32 : 0;
   const emptyStateHeight = Math.max(
     150,
     viewportHeight - (topInset + 8) - 34 - 61 - 105,

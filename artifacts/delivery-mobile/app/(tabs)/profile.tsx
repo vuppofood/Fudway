@@ -78,6 +78,10 @@ export default function ProfileScreen() {
                     router.push('/(tabs)/delivery-code');
                     return;
                   }
+                  if (option.label === 'Configuração') {
+                    router.push('/settings');
+                    return;
+                  }
                   Alert.alert(option.label, 'Esta opção ainda não está conectada.');
                 }}
                 style={({ pressed }) => [
