@@ -8,6 +8,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,10 +16,82 @@ import { getDeliveryAddress } from '@/constants/delivery-address';
 import { useCart } from '@/contexts/CartContext';
 import { useColors } from '@/hooks/useColors';
 
-const paymentMethods = ['Pix', 'Cartão de crédito', 'Cartão de débito', 'Dinheiro'];
-
 const formatPrice = (value: number) =>
   value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+const cardBrands = ['Visa', 'Mastercard', 'American Express', 'Elo', 'Hipercard'];
+
+const getCardBrand = (number: string) => {
+  if (/^4/.test(number)) return 'Visa';
+  if (/^(5[1-5]|2(2[2-9]|[3-6]\d|7[01]|720))/.test(number)) return 'Mastercard';
+  if (/^3[47]/.test(number)) return 'American Express';
+  if (/^(606282|3841)/.test(number)) return 'Hipercard';
+  if (/^(4011|4312|4389|4514|4576|5041|5067|5090|6277|6362|6363)/.test(number)) return 'Elo';
+  return null;
+};
+
+function CardBrandLogo({ brand }: { brand: string }) {
+  if (brand === 'Mastercard') {
+    return (
+      <View style={styles.mastercardLogo}>
+        <View style={[styles.mastercardCircle, styles.mastercardRed]} />
+        <View style={[styles.mastercardCircle, styles.mastercardOrange]} />
+      </View>
+    );
+  }
+
+  if (brand === 'American Express') {
+    return (
+      <View style={styles.amexLogo}>
+        <Text style={styles.amexLogoText}>AMERICAN{'\n'}EXPRESS</Text>
+      </View>
+    );
+  }
+
+  if (brand === 'Elo') {
+    return (
+      <View style={styles.eloLogo}>
+        <View style={styles.eloMark}>
+          <View style={styles.eloMarkCenter} />
+        </View>
+        <Text style={styles.eloLogoText}>elo</Text>
+      </View>
+    );
+  }
+
+  if (brand === 'Hipercard') {
+    return (
+      <View style={styles.hipercardLogo}>
+        <Text style={styles.hipercardLogoText}>Hipercard</Text>
+      </View>
+    );
+  }
+
+  return <Text style={styles.visaLogoText}>VISA</Text>;
+}
+
+const isValidCardExpiry = (value: string) => {
+  const [monthText, yearText] = value.split('/');
+  const month = Number(monthText);
+  const year = Number(`20${yearText}`);
+  const now = new Date();
+  const currentMonth = now.getMonth() + 1;
+  const currentYear = now.getFullYear();
+
+  return (
+    month >= 1 &&
+    month <= 12 &&
+    year >= currentYear &&
+    (year > currentYear || month >= currentMonth)
+  );
+};
+
+type SavedCard = {
+  id: string;
+  brand: string;
+  lastFour: string;
+  holderName: string;
+};
 
 export default function CheckoutScreen() {
   const colors = useColors();
@@ -28,6 +101,15 @@ export default function CheckoutScreen() {
   const [address, setAddress] = useState(getDeliveryAddress());
   const [paymentMethod, setPaymentMethod] = useState('Pix');
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [addingCard, setAddingCard] = useState(false);
+  const [savedCards, setSavedCards] = useState<SavedCard[]>([]);
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+  const [cardBrand, setCardBrand] = useState('Visa');
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardExpiry, setCardExpiry] = useState('');
+  const [cardCvv, setCardCvv] = useState('');
+  const [cardHolder, setCardHolder] = useState('');
+  const [cardDocument, setCardDocument] = useState('');
   const [confirmationOpen, setConfirmationOpen] = useState(false);
 
   useFocusEffect(
@@ -37,6 +119,59 @@ export default function CheckoutScreen() {
   );
 
   const closeConfirmation = () => setConfirmationOpen(false);
+
+  const addCard = () => {
+    const digits = cardNumber.replace(/\D/g, '');
+    const expiryDigits = cardExpiry.replace(/\D/g, '');
+    const cvvDigits = cardCvv.replace(/\D/g, '');
+    const documentDigits = cardDocument.replace(/\D/g, '');
+
+    if (
+      digits.length < 13 ||
+      digits.length > 19 ||
+      expiryDigits.length !== 4 ||
+      !isValidCardExpiry(cardExpiry) ||
+      cvvDigits.length < 3 ||
+      cvvDigits.length > 4 ||
+      !cardHolder.trim() ||
+      (documentDigits.length !== 11 && documentDigits.length !== 14)
+    ) {
+      return;
+    }
+
+    const card: SavedCard = {
+      id: `${Date.now()}`,
+      brand: cardBrand,
+      lastFour: digits.slice(-4),
+      holderName: cardHolder.trim(),
+    };
+    setSavedCards((cards) => [...cards, card]);
+    setSelectedCardId(card.id);
+    setPaymentMethod(`Cartão •••• ${card.lastFour}`);
+    setCardNumber('');
+    setCardExpiry('');
+    setCardCvv('');
+    setCardHolder('');
+    setCardDocument('');
+    setAddingCard(false);
+  };
+
+  const cardFormIsValid = (() => {
+    const digits = cardNumber.replace(/\D/g, '');
+    const expiryDigits = cardExpiry.replace(/\D/g, '');
+    const cvvDigits = cardCvv.replace(/\D/g, '');
+    const documentDigits = cardDocument.replace(/\D/g, '');
+    return (
+      digits.length >= 13 &&
+      digits.length <= 19 &&
+      expiryDigits.length === 4 &&
+      isValidCardExpiry(cardExpiry) &&
+      cvvDigits.length >= 3 &&
+      cvvDigits.length <= 4 &&
+      cardHolder.trim().length > 0 &&
+      (documentDigits.length === 11 || documentDigits.length === 14)
+    );
+  })();
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.card }]}>
@@ -182,49 +317,297 @@ export default function CheckoutScreen() {
       <Modal
         visible={paymentModalOpen}
         transparent
-        animationType="fade"
-        onRequestClose={() => setPaymentModalOpen(false)}
+        animationType="slide"
+        onRequestClose={() => {
+          if (addingCard) {
+            setAddingCard(false);
+          } else {
+            setPaymentModalOpen(false);
+          }
+        }}
       >
-        <View style={styles.modalBackdrop}>
-          <View style={[styles.modalCard, { backgroundColor: colors.card }]}>
-            <Text style={[styles.modalTitle, { color: colors.foreground }]}>
-              Forma de pagamento
-            </Text>
-            {paymentMethods.map((method) => (
+        {addingCard ? (
+          <View style={[styles.addCardScreen, { backgroundColor: colors.card }]}>
+            <View style={[styles.addCardHeader, { paddingTop: Math.max(insets.top, 16) }]}>
               <Pressable
-                key={method}
-                accessibilityRole="radio"
-                accessibilityState={{ selected: paymentMethod === method }}
-                onPress={() => {
-                  setPaymentMethod(method);
-                  setPaymentModalOpen(false);
-                }}
-                style={[styles.methodOption, { borderBottomColor: colors.border }]}
+                accessibilityRole="button"
+                accessibilityLabel="Voltar aos meios de pagamento"
+                onPress={() => setAddingCard(false)}
+                hitSlop={10}
               >
-                <Text style={[styles.methodText, { color: colors.foreground }]}>
-                  {method}
-                </Text>
-                <View
-                  style={[
-                    styles.methodRadio,
-                    { borderColor: paymentMethod === method ? colors.brandGreen : colors.border },
-                  ]}
-                >
-                  {paymentMethod === method ? (
-                    <View style={[styles.methodRadioCenter, { backgroundColor: colors.brandGreen }]} />
-                  ) : null}
-                </View>
+                <Feather name="arrow-left" size={26} color={colors.foreground} />
               </Pressable>
-            ))}
+            </View>
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={[
+                styles.addCardContent,
+                { paddingBottom: Math.max(insets.bottom, 16) + 20 },
+              ]}
+            >
+              <Text style={[styles.addCardTitle, { color: colors.foreground }]}>
+                Adicionar cartão
+              </Text>
+              <Text style={[styles.addCardDescription, { color: colors.mutedForeground }]}>
+                Cadastre seu cartão de crédito ou débito para fazer pagamentos no app.
+              </Text>
+
+              <Text style={[styles.inputLabel, { color: colors.foreground }]}>
+                Bandeira do cartão
+              </Text>
+              <View style={styles.brandOptions} accessibilityLabel="Bandeiras aceitas">
+                {cardBrands.map((brand) => (
+                  <View
+                    key={brand}
+                    style={[styles.brandOption, { borderColor: colors.border }]}
+                  >
+                    <CardBrandLogo brand={brand} />
+                  </View>
+                ))}
+              </View>
+
+              <Text style={[styles.inputLabel, { color: colors.foreground }]}>
+                Número do cartão
+              </Text>
+              <View style={[styles.cardInput, { borderColor: colors.border }]}>
+                <Feather name="credit-card" size={21} color={colors.mutedForeground} />
+                <TextInput
+                  accessibilityLabel="Número do cartão"
+                  keyboardType="number-pad"
+                  maxLength={23}
+                  onChangeText={(value) => {
+                    const digits = value.replace(/\D/g, '').slice(0, 19);
+                    setCardNumber(digits);
+                    const detectedBrand = getCardBrand(digits);
+                    if (detectedBrand) setCardBrand(detectedBrand);
+                  }}
+                  placeholder="Digite o número do cartão"
+                  placeholderTextColor={colors.mutedForeground}
+                  style={[styles.cardInputText, { color: colors.foreground }]}
+                  value={cardNumber.replace(/(.{4})/g, '$1 ').trim()}
+                />
+              </View>
+
+              <View style={styles.cardInputColumns}>
+                <View style={styles.cardInputColumn}>
+                  <Text style={[styles.inputLabel, { color: colors.foreground }]}>
+                    Validade
+                  </Text>
+                  <View style={[styles.cardInput, { borderColor: colors.border }]}>
+                    <Feather name="calendar" size={21} color={colors.mutedForeground} />
+                    <TextInput
+                      accessibilityLabel="Validade do cartão"
+                      keyboardType="number-pad"
+                      maxLength={5}
+                      onChangeText={(value) => {
+                        const digits = value.replace(/\D/g, '').slice(0, 4);
+                        setCardExpiry(digits.length > 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits);
+                      }}
+                      placeholder="MM/AA"
+                      placeholderTextColor={colors.mutedForeground}
+                      style={[styles.cardInputText, { color: colors.foreground }]}
+                      value={cardExpiry}
+                    />
+                  </View>
+                </View>
+                <View style={styles.cardInputColumn}>
+                  <Text style={[styles.inputLabel, { color: colors.foreground }]}>CVV</Text>
+                  <View style={[styles.cardInput, { borderColor: colors.border }]}>
+                    <Feather name="lock" size={21} color={colors.mutedForeground} />
+                    <TextInput
+                      accessibilityLabel="Código de segurança do cartão"
+                      keyboardType="number-pad"
+                      maxLength={4}
+                      onChangeText={(value) => setCardCvv(value.replace(/\D/g, '').slice(0, 4))}
+                      placeholder="Digite o CVV"
+                      placeholderTextColor={colors.mutedForeground}
+                      secureTextEntry
+                      style={[styles.cardInputText, { color: colors.foreground }]}
+                      value={cardCvv}
+                    />
+                  </View>
+                </View>
+              </View>
+
+              <Text style={[styles.inputLabel, { color: colors.foreground }]}>
+                Nome no cartão
+              </Text>
+              <View style={[styles.cardInput, { borderColor: colors.border }]}>
+                <Feather name="user" size={21} color={colors.mutedForeground} />
+                <TextInput
+                  accessibilityLabel="Nome impresso no cartão"
+                  autoCapitalize="words"
+                  onChangeText={setCardHolder}
+                  placeholder="Como está no cartão"
+                  placeholderTextColor={colors.mutedForeground}
+                  style={[styles.cardInputText, { color: colors.foreground }]}
+                  value={cardHolder}
+                />
+              </View>
+
+              <Text style={[styles.inputLabel, { color: colors.foreground }]}>
+                CPF/CNPJ do titular
+              </Text>
+              <View style={[styles.cardInput, { borderColor: colors.border }]}>
+                <Feather name="user-check" size={21} color={colors.mutedForeground} />
+                <TextInput
+                  accessibilityLabel="CPF ou CNPJ do titular"
+                  keyboardType="number-pad"
+                  maxLength={18}
+                  onChangeText={(value) => setCardDocument(value.replace(/\D/g, '').slice(0, 14))}
+                  placeholder="Digite o CPF ou CNPJ do titular"
+                  placeholderTextColor={colors.mutedForeground}
+                  style={[styles.cardInputText, { color: colors.foreground }]}
+                  value={cardDocument}
+                />
+              </View>
+
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ disabled: !cardFormIsValid }}
+                disabled={!cardFormIsValid}
+                onPress={addCard}
+                style={[
+                  styles.addCardButton,
+                  {
+                    backgroundColor: colors.foreground,
+                    opacity: cardFormIsValid ? 1 : 0.45,
+                  },
+                ]}
+              >
+                <Text style={styles.addCardButtonText}>Adicionar cartão</Text>
+              </Pressable>
+            </ScrollView>
+          </View>
+        ) : (
+          <View style={styles.paymentModalBackdrop}>
             <Pressable
               accessibilityRole="button"
+              accessibilityLabel="Fechar meios de pagamento"
               onPress={() => setPaymentModalOpen(false)}
-              style={styles.closeModal}
+              style={StyleSheet.absoluteFill}
+            />
+            <View
+              style={[
+                styles.paymentSheet,
+                {
+                  backgroundColor: colors.card,
+                  paddingBottom: Math.max(insets.bottom, 18) + 20,
+                },
+              ]}
             >
-              <Text style={[styles.closeModalText, { color: colors.foreground }]}>Fechar</Text>
-            </Pressable>
+              <View style={styles.paymentSheetHeader}>
+                <Text style={[styles.paymentSheetTitle, { color: colors.foreground }]}>
+                  Meios de pagamento
+                </Text>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Fechar meios de pagamento"
+                  onPress={() => setPaymentModalOpen(false)}
+                  hitSlop={10}
+                >
+                  <Feather name="x" size={27} color={colors.foreground} />
+                </Pressable>
+              </View>
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.paymentSheetContent}
+              >
+                <Pressable
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: paymentMethod === 'Pix' }}
+                  onPress={() => {
+                    setPaymentMethod('Pix');
+                    setSelectedCardId(null);
+                    setPaymentModalOpen(false);
+                  }}
+                  style={[styles.paymentMethodCard, { borderColor: colors.border }]}
+                >
+                  <View style={styles.pixPaymentIcon}>
+                    <View style={[styles.pixPaymentDiamond, styles.pixDiamondTop]} />
+                    <View style={[styles.pixPaymentDiamond, styles.pixDiamondBottom]} />
+                    <View style={[styles.pixPaymentDiamond, styles.pixDiamondLeft]} />
+                    <View style={[styles.pixPaymentDiamond, styles.pixDiamondRight]} />
+                  </View>
+                  <View style={styles.paymentMethodCopy}>
+                    <Text style={[styles.paymentMethodTitle, { color: colors.foreground }]}>
+                      Pix
+                    </Text>
+                    <Text style={[styles.paymentMethodSubtitle, { color: colors.mutedForeground }]}>
+                      Aprovação imediata • Sem taxas extras
+                    </Text>
+                  </View>
+                  <Feather name="chevron-right" size={25} color={colors.mutedForeground} />
+                </Pressable>
+
+                <Text style={[styles.paymentSectionTitle, { color: colors.foreground }]}>
+                  {savedCards.length > 0 ? 'Cartões salvos' : 'Cartões'}
+                </Text>
+                {savedCards.map((card) => (
+                  <Pressable
+                    key={card.id}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected: selectedCardId === card.id }}
+                    onPress={() => {
+                      setSelectedCardId(card.id);
+                      setPaymentMethod(`Cartão •••• ${card.lastFour}`);
+                      setPaymentModalOpen(false);
+                    }}
+                    style={[
+                      styles.savedCardRow,
+                      {
+                        borderColor: colors.border,
+                        backgroundColor: selectedCardId === card.id ? colors.brandMint : colors.card,
+                      },
+                    ]}
+                  >
+                    <View style={styles.savedCardBrand}>
+                      <CardBrandLogo brand={card.brand} />
+                    </View>
+                    <View style={styles.savedCardCopy}>
+                      <Text style={[styles.savedCardNumber, { color: colors.foreground }]}>
+                        {card.brand} •••• {card.lastFour}
+                      </Text>
+                      <Text style={[styles.savedCardHolder, { color: colors.mutedForeground }]}>
+                        {card.holderName}
+                      </Text>
+                    </View>
+                    {selectedCardId === card.id ? (
+                      <Feather name="check-circle" size={23} color={colors.brandGreen} />
+                    ) : (
+                      <Feather name="chevron-right" size={25} color={colors.mutedForeground} />
+                    )}
+                  </Pressable>
+                ))}
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => setAddingCard(true)}
+                  style={[
+                    styles.paymentMethodCard,
+                    styles.cardPaymentCard,
+                    { borderColor: colors.border, marginTop: savedCards.length ? 16 : 0 },
+                  ]}
+                >
+                  <View style={[styles.cardPaymentIcon, { borderColor: colors.border }]}>
+                    <Feather name="credit-card" size={28} color={colors.foreground} />
+                  </View>
+                  <Text style={[styles.cardPaymentTitle, { color: colors.foreground }]}>
+                    Novo cartão de crédito ou débito
+                  </Text>
+                  <Feather name="chevron-right" size={25} color={colors.mutedForeground} />
+                </Pressable>
+
+                <View style={styles.securePaymentNote}>
+                  <Feather name="lock" size={18} color={colors.mutedForeground} />
+                  <Text style={[styles.securePaymentText, { color: colors.mutedForeground }]}>
+                    Pagamento seguro • Dados protegidos
+                  </Text>
+                </View>
+              </ScrollView>
+            </View>
           </View>
-        </View>
+        )}
       </Modal>
 
       <Modal
@@ -337,27 +720,183 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'rgba(0,0,0,0.45)',
   },
-  modalCard: { width: '100%', maxWidth: 380, borderRadius: 20, padding: 20 },
-  modalTitle: { fontSize: 18, fontWeight: '800', marginBottom: 10 },
-  methodOption: {
-    minHeight: 48,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+  paymentModalBackdrop: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.45)',
+  },
+  paymentSheet: {
+    width: '100%',
+    maxHeight: '90%',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingTop: 28,
+    paddingHorizontal: 22,
+  },
+  paymentSheetHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginBottom: 28,
   },
-  methodText: { fontSize: 14 },
-  methodRadio: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
+  paymentSheetTitle: { fontSize: 23, fontWeight: '800' },
+  paymentSheetContent: { paddingBottom: 8 },
+  paymentMethodCard: {
+    minHeight: 108,
+    borderWidth: 1,
+    borderRadius: 18,
+    paddingHorizontal: 17,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  pixPaymentIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+    backgroundColor: '#35ad69',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  methodRadioCenter: { width: 10, height: 10, borderRadius: 5 },
-  closeModal: { alignSelf: 'flex-end', paddingTop: 14, paddingHorizontal: 4 },
-  closeModalText: { fontSize: 14, fontWeight: '700' },
+  pixPaymentDiamond: {
+    position: 'absolute',
+    width: 14,
+    height: 14,
+    borderRadius: 4,
+    backgroundColor: '#ffffff',
+    transform: [{ rotate: '45deg' }],
+  },
+  pixDiamondTop: { top: 11 },
+  pixDiamondBottom: { bottom: 11 },
+  pixDiamondLeft: { left: 11 },
+  pixDiamondRight: { right: 11 },
+  paymentMethodCopy: { flex: 1, gap: 5 },
+  paymentMethodTitle: { fontSize: 19, fontWeight: '700' },
+  paymentMethodSubtitle: { fontSize: 13 },
+  paymentSectionTitle: {
+    marginTop: 27,
+    marginBottom: 15,
+    fontSize: 19,
+    fontWeight: '700',
+  },
+  savedCardRow: {
+    minHeight: 88,
+    borderWidth: 1,
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  savedCardBrand: {
+    minWidth: 64,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  savedCardBrandText: { fontSize: 12, fontWeight: '900' },
+  savedCardCopy: { flex: 1, gap: 4 },
+  savedCardNumber: { fontSize: 16, fontWeight: '700' },
+  savedCardHolder: { fontSize: 14 },
+  cardPaymentCard: { minHeight: 92 },
+  cardPaymentIcon: {
+    width: 54,
+    height: 54,
+    borderWidth: 1,
+    borderRadius: 29,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardPaymentTitle: { flex: 1, fontSize: 16, fontWeight: '600', lineHeight: 23 },
+  securePaymentNote: {
+    marginTop: 28,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+  },
+  securePaymentText: { fontSize: 13 },
+  addCardScreen: { flex: 1 },
+  addCardHeader: {
+    minHeight: 56,
+    paddingHorizontal: 22,
+    justifyContent: 'center',
+  },
+  addCardContent: { paddingHorizontal: 22, paddingTop: 12 },
+  addCardTitle: { fontSize: 28, fontWeight: '800' },
+  addCardDescription: { marginTop: 10, fontSize: 16, lineHeight: 24 },
+  inputLabel: { marginTop: 25, marginBottom: 10, fontSize: 15, fontWeight: '600' },
+  brandOptions: { flexDirection: 'row', gap: 8 },
+  brandOption: {
+    flex: 1,
+    minHeight: 48,
+    borderWidth: 1,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  visaLogoText: { color: '#1434a4', fontSize: 20, fontStyle: 'italic', fontWeight: '900' },
+  mastercardLogo: {
+    width: 46,
+    height: 30,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mastercardCircle: { width: 25, height: 25, borderRadius: 13 },
+  mastercardRed: { backgroundColor: '#eb001b', marginRight: -9 },
+  mastercardOrange: { backgroundColor: '#f79e1b', opacity: 0.94 },
+  amexLogo: {
+    backgroundColor: '#2e77bc',
+    paddingHorizontal: 4,
+    paddingVertical: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  amexLogoText: { color: '#ffffff', fontSize: 7, fontWeight: '900', textAlign: 'center' },
+  eloLogo: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  eloMark: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 4,
+    borderTopColor: '#f5aa18',
+    borderRightColor: '#e3312d',
+    borderBottomColor: '#3188c8',
+    borderLeftColor: '#3188c8',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  eloMarkCenter: { width: 5, height: 5, borderRadius: 3, backgroundColor: '#111111' },
+  eloLogoText: { color: '#111111', fontSize: 16, fontWeight: '900' },
+  hipercardLogo: {
+    backgroundColor: '#df1e2b',
+    borderRadius: 3,
+    paddingHorizontal: 4,
+    paddingVertical: 5,
+  },
+  hipercardLogoText: { color: '#ffffff', fontSize: 9, fontStyle: 'italic', fontWeight: '800' },
+  cardInput: {
+    minHeight: 58,
+    borderWidth: 1,
+    borderRadius: 13,
+    paddingHorizontal: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  cardInputText: { flex: 1, minWidth: 0, fontSize: 15 },
+  cardInputColumns: { flexDirection: 'row', gap: 14 },
+  cardInputColumn: { flex: 1, minWidth: 0 },
+  addCardButton: {
+    minHeight: 56,
+    marginTop: 30,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addCardButtonText: { color: '#ffffff', fontSize: 16, fontWeight: '800' },
+  modalTitle: { fontSize: 18, fontWeight: '800', marginBottom: 10 },
   confirmationCard: {
     width: '100%',
     maxWidth: 340,

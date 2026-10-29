@@ -14,7 +14,6 @@ import { useRouter } from 'expo-router';
 
 const profileOptions = [
   { label: 'Dados da conta', icon: 'user' as const },
-  { label: 'Forma de pagamento', icon: 'credit-card' as const },
   { label: 'Favoritos', icon: 'heart' as const },
   { label: 'Endereço de entrega', icon: 'map-pin' as const },
   { label: 'Código de entrega', icon: 'key' as const },
